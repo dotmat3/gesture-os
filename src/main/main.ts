@@ -14,7 +14,6 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { spawn } from 'child_process';
 import { io } from 'socket.io-client';
-import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 
 spawn('python', ['index.py']);
@@ -54,7 +53,8 @@ const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
 if (isDebug) {
-  require('electron-debug')();
+  const electronDebug = require('electron-debug');
+  electronDebug({ showDevTools: false });
 }
 
 const installExtensions = async () => {
@@ -96,6 +96,8 @@ const createWindow = async () => {
   });
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
+  mainWindow.removeMenu();
+  // mainWindow.fullScreen = true;
 
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {
@@ -111,9 +113,6 @@ const createWindow = async () => {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
-
-  const menuBuilder = new MenuBuilder(mainWindow);
-  menuBuilder.buildMenu();
 
   // Open urls in the user's browser
   mainWindow.webContents.setWindowOpenHandler((edata) => {

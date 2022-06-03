@@ -1,0 +1,26 @@
+.main-screen {
+  color: white;
+  height: 100vh;
+  background: linear-gradient(180deg, #488bd8 0%, #1d64b4 100%);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  h1 {
+    font-size: 98px;
+  }
+
+  h2 {
+    font-size: 42px;
+    opacity: 0.8;
+  }
+
+  .content {
+    padding: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 40px;
+  }
+}
