@@ -12,8 +12,22 @@ import path from 'path';
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
+import { spawn } from 'child_process';
+import { io } from 'socket.io-client';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+
+spawn('python', ['index.py']);
+
+const socket = io('http://0.0.0.0:5000');
+
+socket.on('test', (arg) => console.log(arg));
+
+socket.on('connect', () => {
+  socket.emit('get-data-python', 'Test data from the UI', (err, res) => {
+    console.log(res);
+  });
+});
 
 export default class AppUpdater {
   constructor() {
