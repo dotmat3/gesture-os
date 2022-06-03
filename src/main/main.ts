@@ -16,18 +16,6 @@ import { spawn } from 'child_process';
 import { io } from 'socket.io-client';
 import { resolveHtmlPath } from './util';
 
-spawn('python', ['index.py']);
-
-const socket = io('http://0.0.0.0:5000');
-
-socket.on('test', (arg) => console.log(arg));
-
-socket.on('connect', () => {
-  socket.emit('get-data-python', 'Test data from the UI', (err, res) => {
-    console.log(res);
-  });
-});
-
 export default class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
@@ -137,9 +125,36 @@ app.on('window-all-closed', () => {
   }
 });
 
+function communicateWithPython() {
+  console.log('Spawn python process...');
+  const pyProcess = spawn('python', ['./src/python/index.py']);
+  pyProcess.stdout.on('data', (arg) => console.log('Stdout:', arg.toString()));
+
+  const socket = io('http://0.0.0.0:5000', { transports: ['websocket'] });
+
+  socket.on('gesture-prediction', ({ label, confidence }) =>
+    console.log('Predicted gesture', label, 'with confidence', confidence)
+  );
+
+  socket.on('python-exception', (e) => console.log(e));
+
+  socket.on('connect', () => {
+    console.log('Connected to python backend');
+  });
+
+  socket.on('connect_error', (err) => {
+    console.log(`connect_error due to ${err.message}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Disconnected from python backend');
+  });
+}
+
 app
   .whenReady()
   .then(() => {
+    communicateWithPython();
     createWindow();
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the
