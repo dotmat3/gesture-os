@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import GestureIndicator from '../../components/GestureIndicator';
 
 import './MainScreen.scss';
 
@@ -24,6 +27,8 @@ const getDateString = () => {
 };
 
 const MainScreen = () => {
+  const navigate = useNavigate();
+
   const [timeString, setTimeString] = useState('--:--:--');
   const [dateString, setDateString] = useState('-----, -- ----');
 
@@ -45,8 +50,11 @@ const MainScreen = () => {
       <h1>{timeString}</h1>
       <h2>{dateString}</h2>
       <div className="content">
-        <p>🖐</p>
-        <p>Hold palm sx</p>
+        <GestureIndicator
+          gesture="left palm"
+          onClick={() => navigate('/command-mode')}
+          text="Command mode"
+        />
       </div>
     </div>
   );
