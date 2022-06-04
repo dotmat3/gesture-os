@@ -64,7 +64,7 @@ def draw_video_landmarks(frames, landmarks_result=None, hands=None):
 
 
 def decode_label(one_hot_vector):
-    decoding = {0: "down", 1: "l_palm", 2: "none", 3: "r_palm"}
+    decoding = {0: "swipe down", 1: "left palm", 2: "none", 3: "right palm"}
     index = np.argmax(one_hot_vector)
     return decoding[index]
 
@@ -133,7 +133,7 @@ def start_gesture_recognition(window_size, stride, detected_gesture_fn, exceptio
                 pred = lstm(tf.expand_dims(keypoints_accumulator, axis=0))
                 pred_data = pred.numpy()[0]
                 pred_label = decode_label(pred_data)
-                confidence = str(int(max(pred_data) * 100)) + "%"
+                confidence = int(max(pred_data) * 100)
 
                 # print(pred_label, confidence)
                 detected_gesture_fn(pred_label, confidence)

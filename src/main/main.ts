@@ -9,10 +9,10 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, globalShortcut } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
-import { spawn } from 'child_process';
+import { ChildProcess, spawn } from 'child_process';
 
 import { Server } from 'socket.io';
 import express from 'express';
@@ -29,12 +29,6 @@ export default class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
-
-ipcMain.on('ipc-example', async (event, arg) => {
-  const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-  console.log(msgTemplate(arg));
-  event.reply('ipc-example', msgTemplate('pong'));
-});
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -138,9 +132,13 @@ function startSocketIOServer() {
   io.on('connection', (socket) => {
     console.log('A user connected');
 
-    socket.on('gesture-prediction', ({ label, confidence }) =>
-      console.log('Predicted gesture', label, 'with confidence', confidence)
-    );
+    socket.on('gesture-prediction', (prediction) => {
+      const { label, confidence } = prediction;
+      console.log('Predicted gesture', label, 'with confidence', confidence);
+
+      if (mainWindow)
+        mainWindow.webContents.send('gesture-prediction', prediction);
+    });
 
     socket.on('python-exception', (e) => console.log(e));
 
@@ -158,8 +156,19 @@ app
     const socketIOServer = startSocketIOServer();
     socketIOServer.on('listening', () => {
       console.log('SocketIO server started');
-      console.log('Launching python process...');
-      spawn('python', ['src/python/index.py']);
+
+      let pythonProcess: ChildProcess | null = null;
+
+      globalShortcut.register('Ctrl+P', () => {
+        if (!pythonProcess) {
+          console.log('Starting python process...');
+          pythonProcess = spawn('python', ['src/python/index.py']);
+        } else {
+          console.log('Killing python process...');
+          pythonProcess.kill();
+          pythonProcess = null;
+        }
+      });
     });
 
     createWindow();

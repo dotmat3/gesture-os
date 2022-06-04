@@ -1,7 +1,12 @@
 .command-mode {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
   height: 100vh;
   color: white;
-  background-color: #3b77bc;
+  // background-color: #3b77bc;
+  background-color: rgba(0, 0, 0, 0.8);
 
   h1 {
     padding: 20px;
