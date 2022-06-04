@@ -1,12 +1,8 @@
-import eventlet
 import socketio
-import gesture
 from threading import Thread
+from gesture import start_gesture_recognition
 
-eventlet.monkey_patch()
-
-sio = socketio.Server()
-app = socketio.WSGIApp(sio)
+sio = socketio.Client()
 
 
 def on_gesture_prediction(label, confidence):
@@ -17,30 +13,34 @@ def on_gesture_exception(exception):
     sio.emit("python-exception", exception)
 
 
+# Server message
+# @sio.on("event-name")
+# def on_message(data):
+#     print("I received a message!")
+
+
 @sio.event
-def connect(sid, environ):
-    print("Connect")
+def connect():
+    print("I'm connected to the backend")
 
     window_size = 20
     stride = 5
-
     gesture_thread = Thread(
-        target=gesture.start_gesture_recognition,
+        target=start_gesture_recognition,
         args=[window_size, stride, on_gesture_prediction, on_gesture_exception],
     )
     gesture_thread.start()
 
 
-@sio.on("get-data-python")
-def msg(sid, data):
-    print("message ", data)
-    return "OK", "Test data from python"
+@sio.event
+def connect_error(data):
+    print("The connection failed!", data)
 
 
 @sio.event
-def disconnect(sid):
-    pass
+def disconnect():
+    print("I'm disconnected!")
 
 
 if __name__ == "__main__":
-    eventlet.wsgi.server(eventlet.listen(("", 5000)), app)
+    sio.connect("http://localhost:5000")

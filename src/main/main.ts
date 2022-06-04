@@ -13,7 +13,11 @@ import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { spawn } from 'child_process';
-import { io } from 'socket.io-client';
+
+import { Server } from 'socket.io';
+import express from 'express';
+import http from 'http';
+
 import { resolveHtmlPath } from './util';
 
 export default class AppUpdater {
@@ -125,36 +129,39 @@ app.on('window-all-closed', () => {
   }
 });
 
-function communicateWithPython() {
-  console.log('Spawn python process...');
-  const pyProcess = spawn('python', ['./src/python/index.py']);
-  pyProcess.stdout.on('data', (arg) => console.log('Stdout:', arg.toString()));
+function startSocketIOServer() {
+  const expressApp = express();
+  const server = http.createServer(expressApp);
 
-  const socket = io('http://0.0.0.0:5000', { transports: ['websocket'] });
+  const io = new Server(server);
 
-  socket.on('gesture-prediction', ({ label, confidence }) =>
-    console.log('Predicted gesture', label, 'with confidence', confidence)
-  );
+  io.on('connection', (socket) => {
+    console.log('A user connected');
 
-  socket.on('python-exception', (e) => console.log(e));
+    socket.on('gesture-prediction', ({ label, confidence }) =>
+      console.log('Predicted gesture', label, 'with confidence', confidence)
+    );
 
-  socket.on('connect', () => {
-    console.log('Connected to python backend');
+    socket.on('python-exception', (e) => console.log(e));
+
+    socket.on('disconnect', () => console.log('A user disconnected'));
   });
 
-  socket.on('connect_error', (err) => {
-    console.log(`connect_error due to ${err.message}`);
-  });
+  server.listen(5000);
 
-  socket.on('disconnect', () => {
-    console.log('Disconnected from python backend');
-  });
+  return server;
 }
 
 app
   .whenReady()
   .then(() => {
-    communicateWithPython();
+    const socketIOServer = startSocketIOServer();
+    socketIOServer.on('listening', () => {
+      console.log('SocketIO server started');
+      console.log('Launching python process...');
+      spawn('python', ['src/python/index.py']);
+    });
+
     createWindow();
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the

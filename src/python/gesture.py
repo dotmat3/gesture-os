@@ -3,6 +3,7 @@ import numpy as np
 import mediapipe as mp
 import tensorflow as tf
 import traceback
+import os
 
 
 def process_landmarks(frame, model):
@@ -69,10 +70,17 @@ def decode_label(one_hot_vector):
 
 
 def start_gesture_recognition(window_size, stride, detected_gesture_fn, exception_fn):
+
+    model_path = "model.h5"
+
+    # Support direct running this python file and also spawning from another process
+    if os.path.dirname(__file__).lower() != os.getcwd().lower():
+        model_path = os.path.join("src", "python", model_path)
+
     try:
         cap = cv2.VideoCapture(0)
 
-        lstm = tf.keras.models.load_model("src/python/model.h5")
+        lstm = tf.keras.models.load_model(model_path)
 
         # Initialize the webcam for Hand Gesture Recognition Python project
         mpHands = mp.solutions.hands
@@ -152,6 +160,7 @@ def start_gesture_recognition(window_size, stride, detected_gesture_fn, exceptio
                 break
 
     except Exception as e:
+        print(traceback.format_exc())
         exception_fn(traceback.format_exc())
     finally:
         # Release the webcam and destroy all active windows
