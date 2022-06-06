@@ -5,8 +5,8 @@ from gesture import start_gesture_recognition
 sio = socketio.Client()
 
 
-def on_gesture_prediction(label, confidence):
-    sio.emit("gesture-prediction", {"label": label, "confidence": confidence})
+def on_gesture_prediction(data):
+    sio.emit("gesture-prediction", data)
 
 
 def on_gesture_exception(exception):

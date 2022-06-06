@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Hand, Sign } from 'renderer/GesturePrediction';
 
 import GestureIndicator from '../../components/GestureIndicator';
 
@@ -47,7 +48,11 @@ const MainScreen = () => {
       <h1>{timeString}</h1>
       <h2>{dateString}</h2>
       <div className="content">
-        <GestureIndicator gesture="left palm" text="Command mode" />
+        <GestureIndicator
+          hand={Hand.left}
+          sign={Sign.palm}
+          text="Command mode"
+        />
       </div>
     </div>
   );

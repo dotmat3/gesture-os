@@ -133,9 +133,6 @@ function startSocketIOServer() {
     console.log('A user connected');
 
     socket.on('gesture-prediction', (prediction) => {
-      const { label, confidence } = prediction;
-      console.log('Predicted gesture', label, 'with confidence', confidence);
-
       if (mainWindow)
         mainWindow.webContents.send('gesture-prediction', prediction);
     });

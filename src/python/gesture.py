@@ -10,67 +10,17 @@ def process_landmarks(frame, model):
     return model.process(frame)
 
 
-def extract_keypoints(result):
-    if not result.multi_hand_landmarks:
-        return np.zeros(21 * 3)
-
-    return np.array(
-        [
-            [res.x, res.y, res.z]
-            for landmarks in result.multi_hand_landmarks
-            for res in landmarks.landmark
-        ]
-    ).flatten()
-
-
-def preprocess_landmark_results(landmark_results):
-    return np.array([extract_keypoints(res) for res in landmark_results])
-
-
-def draw_landmarks(frame, result):
-    x, y, c = frame.shape
-    frame_copy = frame.copy()
-
-    mpDraw = mp.solutions.drawing_utils
-    mpHands = mp.solutions.hands
-
-    if result.multi_hand_landmarks:
-        for handslms in result.multi_hand_landmarks:
-            mpDraw.draw_landmarks(frame_copy, handslms, mpHands.HAND_CONNECTIONS)
-
-    return frame_copy
-
-
-def draw_video_landmarks(frames, landmarks_result=None, hands=None):
-    video_frames = []
-
-    if landmarks_result is not None:
-        for frame, result in zip(frames, landmarks_result):
-            video_frame = draw_landmarks(frame, result)
-            video_frames.append(video_frame)
-    else:
-        if hands is None:
-            raise Exception(
-                "The attribute hands must be defined when landmarks_result is None"
-            )
-
-        for frame in frames:
-            result = process_landmarks(frame, hands)
-
-            video_frame = draw_landmarks(frame, result)
-            video_frames.append(video_frame)
-
-    return video_frames
+def extract_keypoints(landmarks):
+    return np.array([[res.x, res.y, res.z] for res in landmarks.landmark]).flatten()
 
 
 def decode_label(one_hot_vector):
-    decoding = {0: "swipe down", 1: "left palm", 2: "none", 3: "right palm"}
+    decoding = {0: "down", 1: "none", 2: "palm"}
     index = np.argmax(one_hot_vector)
     return decoding[index]
 
 
 def start_gesture_recognition(window_size, stride, detected_gesture_fn, exception_fn):
-
     model_path = "model.h5"
 
     # Support direct running this python file and also spawning from another process
@@ -85,11 +35,12 @@ def start_gesture_recognition(window_size, stride, detected_gesture_fn, exceptio
         # Initialize the webcam for Hand Gesture Recognition Python project
         mpHands = mp.solutions.hands
         hands = mpHands.Hands(
-            static_image_mode=True, max_num_hands=1, min_detection_confidence=0.5
+            static_image_mode=True, max_num_hands=2, min_detection_confidence=0.5
         )
         mpDraw = mp.solutions.drawing_utils
 
-        keypoints_accumulator = []
+        left_keypoints_accumulator = []
+        right_keypoints_accumulator = []
 
         pred_label = "/"
 
@@ -103,7 +54,7 @@ def start_gesture_recognition(window_size, stride, detected_gesture_fn, exceptio
             x, y, c = frame.shape
 
             # Flip the frame vertically
-            # frame = cv2.flip(frame, 1)
+            frame = cv2.flip(frame, 1)
 
             framergb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             # Get hand landmark prediction
@@ -111,35 +62,63 @@ def start_gesture_recognition(window_size, stride, detected_gesture_fn, exceptio
 
             # Post process the result
             if result.multi_hand_landmarks:
+                # Draw landmarks
                 for handslms in result.multi_hand_landmarks:
                     mpDraw.draw_landmarks(frame, handslms, mpHands.HAND_CONNECTIONS)
 
-            keypoints_accumulator.append(extract_keypoints(result))
+            left_keypoints = np.zeros(21 * 3)
+            right_keypoints = np.zeros(21 * 3)
 
-            if len(keypoints_accumulator) == (window_size + stride):
-                keypoints_accumulator = keypoints_accumulator[stride:]
-                cv2.putText(
-                    frame,
-                    "Moving window",
-                    (10, 150),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 0, 255),
-                    2,
-                    cv2.LINE_AA,
+            if result.multi_hand_landmarks:
+                for handedness, handslms in zip(
+                    result.multi_handedness, result.multi_hand_landmarks
+                ):
+                    hand_label = handedness.classification[0].label
+
+                    keypoints = extract_keypoints(handslms)
+
+                    if hand_label == "Left":
+                        left_keypoints = keypoints
+                    else:
+                        right_keypoints = keypoints
+
+            left_keypoints_accumulator.append(left_keypoints)
+            right_keypoints_accumulator.append(right_keypoints)
+
+            if len(left_keypoints_accumulator) == (window_size + stride):
+                left_keypoints_accumulator = left_keypoints_accumulator[stride:]
+                right_keypoints_accumulator = right_keypoints_accumulator[stride:]
+
+            if len(left_keypoints_accumulator) == window_size:
+                left_pred = lstm(tf.expand_dims(left_keypoints_accumulator, axis=0))
+                right_pred = lstm(tf.expand_dims(right_keypoints_accumulator, axis=0))
+
+                left_pred_data = left_pred.numpy()[0]
+                left_pred_label = decode_label(left_pred_data)
+                left_confidence = int(max(left_pred_data) * 100)
+                if left_confidence < 80:
+                    left_pred_label = "none"
+
+                right_pred_data = right_pred.numpy()[0]
+                right_pred_label = decode_label(right_pred_data)
+                right_confidence = int(max(right_pred_data) * 100)
+                if right_confidence < 80:
+                    right_pred_label = "none"
+
+                detected_gesture_fn(
+                    {
+                        "left": {
+                            "label": left_pred_label,
+                            "confidence": left_confidence,
+                        },
+                        "right": {
+                            "label": right_pred_label,
+                            "confidence": right_confidence,
+                        },
+                    }
                 )
 
-            if len(keypoints_accumulator) == window_size:
-                pred = lstm(tf.expand_dims(keypoints_accumulator, axis=0))
-                pred_data = pred.numpy()[0]
-                pred_label = decode_label(pred_data)
-                confidence = int(max(pred_data) * 100)
-
-                # print(pred_label, confidence)
-                detected_gesture_fn(pred_label, confidence)
-
-                if max(pred_data) < 0.5:
-                    pred_label = "Not confident"
+                pred_label = left_pred_label + " - " + right_pred_label
 
             # Show the prediction on the frame
             cv2.putText(
@@ -166,3 +145,13 @@ def start_gesture_recognition(window_size, stride, detected_gesture_fn, exceptio
         # Release the webcam and destroy all active windows
         cap.release()
         cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    window_size = 20
+    stride = 5
+
+    def __detected_gesture_fn(data):
+        print(data)
+
+    start_gesture_recognition(window_size, stride, __detected_gesture_fn, print)
