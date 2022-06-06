@@ -1,10 +1,12 @@
 .command-mode {
   position: fixed;
-  top: 0;
+  top: 100%;
   left: 0;
   width: 100vw;
   height: 100vh;
   color: white;
+  transition: all 300ms;
+
   // background-color: #3b77bc;
   background-color: rgba(0, 0, 0, 0.8);
 
@@ -12,4 +14,26 @@
     padding: 20px;
     font-size: 40px;
   }
+
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+.command-mode-enter {
+  top: 0;
+}
+
+.command-mode-enter-done {
+  top: 0;
+  border-radius: 0px;
+}
+
+.command-mode-exit {
+  top: 100%;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+.command-mode-exit-done {
+  top: 100%;
 }

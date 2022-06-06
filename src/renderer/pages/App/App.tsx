@@ -1,32 +1,33 @@
 import { useEffect, useState } from 'react';
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
-import { Gesture } from 'renderer/components/GestureIndicator/GestureIndicator';
+import { CSSTransition } from 'react-transition-group';
+
+import { Gesture, useGestures } from 'renderer/GesturePrediction';
 
 import CommandMode from '../CommandMode';
 import MainScreen from '../MainScreen';
 
 import './App.scss';
 
-export type GesturePredictionType = { label: Gesture; confidence: number };
-
 const App = () => {
+  const gesturePrediction = useGestures();
   const [showCommandMode, setShowCommandMode] = useState(false);
 
   useEffect(() => {
-    window.electron.ipcRenderer.on('gesture-prediction', (prediction) => {
-      const { label } = prediction as GesturePredictionType;
+    gesturePrediction.on(Gesture.leftPalm, () => {
+      // eslint-disable-next-line no-console
+      console.log('Arrivata left palm');
+      setShowCommandMode(true);
+    });
 
-      if (label === 'left palm') {
-        // eslint-disable-next-line no-console
-        console.log('Show command mode');
-        setShowCommandMode(true);
-      } else {
-        // eslint-disable-next-line no-console
-        console.log('Hide command mode');
+    gesturePrediction.onAny((gesture) => {
+      if (gesture !== Gesture.leftPalm) {
         setShowCommandMode(false);
+        // eslint-disable-next-line no-console
+        console.log('Arrivata', gesture);
       }
     });
-  }, []);
+  }, [gesturePrediction]);
 
   return (
     <>
@@ -35,7 +36,14 @@ const App = () => {
           <Route path="/" element={<MainScreen />} />
         </Routes>
       </Router>
-      {showCommandMode && <CommandMode />}
+      <CSSTransition
+        in={showCommandMode}
+        timeout={300}
+        classNames="command-mode"
+        unmountOnExit
+      >
+        <CommandMode />
+      </CSSTransition>
     </>
   );
 };
