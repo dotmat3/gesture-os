@@ -1,8 +1,17 @@
 import socketio
 from threading import Thread
 from gesture import start_gesture_recognition
+import speech
+import speech_recognition as sr
 
 sio = socketio.Client()
+
+
+def on_speech_preview(text):
+    sio.emit("speech-preview", text)
+
+
+speech_to_text = speech.SpeechToText(on_preview_text=on_speech_preview)
 
 
 def on_gesture_prediction(data):
@@ -13,10 +22,24 @@ def on_gesture_exception(exception):
     sio.emit("python-exception", exception)
 
 
-# Server message
-# @sio.on("event-name")
-# def on_message(data):
-#     print("I received a message!")
+@sio.on("start-speech-recognition")
+def on_start_speech_recognition():
+    print("Received start speech recognition")
+    speech_to_text.start_recording()
+
+
+@sio.on("cancel-speech-recognition")
+def on_cancel_speech_recognition():
+    print("Received cancel speech recognition")
+    speech_to_text.stop_recording()
+
+
+@sio.on("stop-speech-recognition")
+def on_stop_speech_recognition():
+    text = speech_to_text.stop_recording()
+    print("Received stop speech recognition")
+    print("Sending speech recognized", text)
+    sio.emit("speech-recognized", text)
 
 
 @sio.event

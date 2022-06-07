@@ -34,6 +34,7 @@ export type GesturePrediction = {
   on: (gesture: Gesture, callback: GestureCallback) => void;
   onAny: (callback: GestureCallback) => void;
   off: (gesture: Gesture, callback: GestureCallback) => void;
+  offAny: (callback: GestureCallback) => void;
 };
 
 export type GesturesMap = Partial<{
@@ -78,6 +79,7 @@ export const GestureProvider = ({
 
     const listener = (prediction: GesturePredictionType) => {
       const { left, right } = prediction;
+
       const leftLabel = `left_${left.label}`;
       const rightLabel = `right_${right.label}`;
 
@@ -90,7 +92,7 @@ export const GestureProvider = ({
       const rightCallbacks = gesturesMap[rightLabel];
       if (rightCallbacks)
         rightCallbacks.forEach((callback) =>
-          callback({ hand: Hand.right, sign: left.label })
+          callback({ hand: Hand.right, sign: right.label })
         );
     };
     window.electron.ipcRenderer.on(
@@ -154,7 +156,20 @@ export const GestureProvider = ({
     });
   }, []);
 
-  gestureContext.current = { on, off, onAny };
+  const offAny = useCallback((callback: GestureCallback) => {
+    setGesturesMap((prev) => {
+      Object.values(Hand).forEach((hand) => {
+        Object.values(Sign).forEach((sign) => {
+          const index = gestureToString({ hand, sign });
+          if (index in prev)
+            prev[index] = prev[index]?.filter((fn) => callback !== fn);
+        });
+      });
+      return prev;
+    });
+  }, []);
+
+  gestureContext.current = { on, off, onAny, offAny };
 
   return (
     <Context.Provider value={gestureContext.current}>

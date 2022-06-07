@@ -9,7 +9,7 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, globalShortcut } from 'electron';
+import { app, BrowserWindow, shell, globalShortcut, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { ChildProcess, spawn } from 'child_process';
@@ -132,6 +132,33 @@ function startSocketIOServer() {
   io.on('connection', (socket) => {
     console.log('A user connected');
 
+    // Speech
+
+    ipcMain.on('start-speech-recognition', () => {
+      console.log('Sending start speech recognition');
+      socket.emit('start-speech-recognition');
+    });
+
+    ipcMain.on('cancel-speech-recognition', () => {
+      console.log('Sending cancel speech recognition');
+      socket.emit('cancel-speech-recognition');
+    });
+
+    ipcMain.on('stop-speech-recognition', () => {
+      console.log('Sending stop speech recognition');
+      socket.emit('stop-speech-recognition');
+    });
+
+    socket.on('speech-recognized', (text) => {
+      console.log('Received', text);
+      if (mainWindow) mainWindow.webContents.send('speech-recognized', text);
+    });
+
+    socket.on('speech-preview', (text) => {
+      if (mainWindow) mainWindow.webContents.send('speech-preview', text);
+    });
+
+    // Gesture
     socket.on('gesture-prediction', (prediction) => {
       if (mainWindow)
         mainWindow.webContents.send('gesture-prediction', prediction);

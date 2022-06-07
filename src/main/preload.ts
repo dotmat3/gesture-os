@@ -1,6 +1,12 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
-export type Channels = 'gesture-prediction';
+export type Channels =
+  | 'gesture-prediction'
+  | 'start-speech-recognition'
+  | 'cancel-speech-recognition'
+  | 'stop-speech-recognition'
+  | 'speech-preview'
+  | 'speech-recognized';
 
 contextBridge.exposeInMainWorld('electron', {
   ipcRenderer: {
@@ -16,6 +22,9 @@ contextBridge.exposeInMainWorld('electron', {
     },
     once(channel: Channels, func: (...args: unknown[]) => void) {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));
+    },
+    off(channel: Channels, func: (...args: unknown[]) => void) {
+      ipcRenderer.off(channel, func);
     },
   },
 });

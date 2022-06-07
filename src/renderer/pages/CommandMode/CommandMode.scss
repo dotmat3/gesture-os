@@ -1,6 +1,6 @@
 .command-mode {
   position: fixed;
-  top: 100%;
+  top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
@@ -20,20 +20,20 @@
 }
 
 .command-mode-enter {
-  top: 0;
+  top: 100%;
 }
 
-.command-mode-enter-done {
+.command-mode-enter-active {
   top: 0;
   border-radius: 0px;
 }
 
 .command-mode-exit {
-  top: 100%;
+  top: 0;
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
 }
 
-.command-mode-exit-done {
+.command-mode-exit-active {
   top: 100%;
 }
