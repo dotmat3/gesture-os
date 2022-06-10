@@ -1,18 +1,26 @@
-/* eslint-disable no-console */
 import { useEffect, useRef, useState } from 'react';
+import { AppActionType, useApps } from 'renderer/AppStore';
 import GestureIndicator from 'renderer/components/GestureIndicator';
 import { Gesture, Hand, Sign, useGestures } from 'renderer/GesturePrediction';
 
+import AppLauncher from './AppLauncher';
+
 import './CommandMode.scss';
 
-const CommandMode = () => {
+const VoiceResult = ({ speechText }: { speechText: string }) => {
+  return <h1>{speechText}</h1>;
+};
+
+const CommandMode = ({ onClose }: { onClose: VoidFunction }) => {
   const gestures = useGestures();
+  const [, appDispatch] = useApps();
 
   const [voiceActive, setVoiceActive] = useState<boolean>(false);
 
   const [speechText, setSpeechText] = useState('');
 
   const voiceActiveRef = useRef(voiceActive);
+
   useEffect(() => {
     voiceActiveRef.current = voiceActive;
   }, [voiceActive]);
@@ -69,12 +77,48 @@ const CommandMode = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const onSwipeLeft = () => appDispatch({ type: AppActionType.selectLeft });
+    const onSwipeRight = () => appDispatch({ type: AppActionType.selectRight });
+
+    gestures.on({ hand: Hand.right, sign: Sign.swipeLeft }, onSwipeLeft);
+    gestures.on({ hand: Hand.right, sign: Sign.swipeRight }, onSwipeRight);
+
+    return () => {
+      gestures.off({ hand: Hand.right, sign: Sign.swipeLeft }, onSwipeLeft);
+      gestures.off({ hand: Hand.right, sign: Sign.swipeRight }, onSwipeRight);
+    };
+  }, [gestures, appDispatch]);
+
   return (
     <div className="command-mode">
-      <h1>Command mode</h1>
-      <h2>Voice active: {voiceActive ? 'Active' : 'Not active'}</h2>
-      <h3>{speechText}</h3>
-      <GestureIndicator hand={Hand.left} sign={Sign.palm} text="Go back" />
+      <div className="command-mode__header">
+        <GestureIndicator
+          hand={Hand.left}
+          sign={Sign.palm}
+          text="Go back"
+          horizontal
+        />
+        <GestureIndicator
+          className="command-mode__swipe-up"
+          hand={Hand.right}
+          sign={Sign.swipeUp}
+          text="Swipe up to change app layout"
+          hideIndication
+          swap
+        />
+        <GestureIndicator
+          hand={Hand.right}
+          sign={Sign.palm}
+          text="Voice commands"
+          horizontal
+          swap
+        />
+      </div>
+      <div className="command-mode__content">
+        {voiceActive && <VoiceResult speechText={speechText} />}
+        {!voiceActive && <AppLauncher onClose={onClose} />}
+      </div>
     </div>
   );
 };

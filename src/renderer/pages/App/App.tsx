@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
+import { AppProvider } from 'renderer/AppStore';
 
 import { Hand, Sign, useGestures } from 'renderer/GesturePrediction';
 
@@ -24,7 +25,7 @@ const App = () => {
   }, [gestures]);
 
   return (
-    <>
+    <AppProvider>
       <Router>
         <Routes>
           <Route path="/" element={<MainScreen />} />
@@ -37,9 +38,9 @@ const App = () => {
         mountOnEnter
         unmountOnExit
       >
-        <CommandMode />
+        <CommandMode onClose={() => setShowCommandMode(false)} />
       </CSSTransition>
-    </>
+    </AppProvider>
   );
 };
 

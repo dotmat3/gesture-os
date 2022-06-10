@@ -2,19 +2,45 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
 
-  .gesture-icon {
-    font-size: 80px;
+  &.swap {
+    flex-direction: column-reverse;
   }
 
-  .gesture-text {
+  &.horizontal {
+    flex-direction: row;
+
+    &.swap {
+      flex-direction: row-reverse;
+
+      .gesture-indicator__text,
+      .gesture-indicator__additional-text {
+        text-align: right;
+      }
+    }
+
+    .gesture-indicator__text,
+    .gesture-indicator__additional-text {
+      padding: 0 10px;
+    }
+  }
+
+  .gesture-indicator__icon {
+    width: 70px;
+    height: 70px;
+  }
+
+  .gesture-indicator__text {
     color: #ffdd67;
-    font-size: 26px;
+    font-size: 22px;
     text-transform: capitalize;
+    padding: 10px 0;
   }
 
-  .gesture-additional-text {
-    font-size: 24px;
+  .gesture-indicator__additional-text {
+    font-size: 22px;
+    padding: 10px 0;
   }
 }
