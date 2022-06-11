@@ -25,7 +25,7 @@ export enum AppActionType {
 
 export type AppAction =
   | { type: AppActionType.open; payload: AppInstance }
-  | { type: AppActionType.close; payload: string }
+  | { type: AppActionType.close }
   | { type: AppActionType.select; payload: string }
   | { type: AppActionType.selectLeft }
   | { type: AppActionType.selectRight };
@@ -45,12 +45,7 @@ const reducer = (state: AppState, action: AppAction): AppState => {
         selected: action.payload.id,
       };
     case AppActionType.close: {
-      const history = state.history.filter((app) => app.id !== action.payload);
-      if (state.selected !== action.payload)
-        return {
-          ...state,
-          history,
-        };
+      const history = state.history.filter((app) => app.id !== state.selected);
 
       if (history.length === 0)
         return {

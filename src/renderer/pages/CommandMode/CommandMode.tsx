@@ -80,13 +80,16 @@ const CommandMode = ({ onClose }: { onClose: VoidFunction }) => {
   useEffect(() => {
     const onSwipeLeft = () => appDispatch({ type: AppActionType.selectLeft });
     const onSwipeRight = () => appDispatch({ type: AppActionType.selectRight });
+    const onSwipeDown = () => appDispatch({ type: AppActionType.close });
 
     gestures.on({ hand: Hand.right, sign: Sign.swipeLeft }, onSwipeLeft);
     gestures.on({ hand: Hand.right, sign: Sign.swipeRight }, onSwipeRight);
+    gestures.on({ hand: Hand.right, sign: Sign.swipeDown }, onSwipeDown);
 
     return () => {
       gestures.off({ hand: Hand.right, sign: Sign.swipeLeft }, onSwipeLeft);
       gestures.off({ hand: Hand.right, sign: Sign.swipeRight }, onSwipeRight);
+      gestures.off({ hand: Hand.right, sign: Sign.swipeDown }, onSwipeDown);
     };
   }, [gestures, appDispatch]);
 
