@@ -1,70 +1,131 @@
-import classNames from 'classnames';
-import { CSSProperties, FC, useEffect, useState } from 'react';
-import { useApps } from 'renderer/AppStore';
-import { Hand, Sign } from 'renderer/GesturePrediction';
+import { FC, useCallback, useEffect, useState } from 'react';
 
-import GestureIndicator from '../../components/GestureIndicator';
+import { CSSTransition } from 'react-transition-group';
+
+import { AppInstance, useApps } from 'renderer/AppStore';
+import { Hand, Sign, useGestures } from 'renderer/GesturePrediction';
+import { getDateString, getTimeString } from 'renderer/utils';
+
+import GestureIndicator from 'renderer/components/GestureIndicator';
+
+import CommandMode from '../CommandMode';
+import LayoutMode from '../LayoutMode';
+import TaskBar from './TaskBar';
 
 import './MainScreen.scss';
 
-export type TaskBarProps = { time: string; date: string };
+export type CommandModeWithTransitionProps = {
+  show: boolean;
+  onClose: VoidFunction;
+  onShowLayoutMode: VoidFunction;
+};
 
-const TaskBar: FC<TaskBarProps> = ({ time, date }) => {
-  const [apps] = useApps();
-
+const CommandModeWithTransition: FC<CommandModeWithTransitionProps> = ({
+  show,
+  onClose,
+  onShowLayoutMode,
+}) => {
   return (
-    <div className="task-bar">
-      <GestureIndicator
-        hand={Hand.left}
-        sign={Sign.palm}
-        text="Command mode"
-        horizontal
-      />
-      <div className="task-bar__apps">
-        {apps.history.map((app) => (
-          <div
-            className={classNames('app-icon', {
-              active: app.id === apps.selected,
-            })}
-            style={{ '--color': app.color } as CSSProperties}
-            key={app.id}
-          >
-            <img src={app.icon} alt="app icon" />
-          </div>
-        ))}
-      </div>
-      <div className="date-time">
-        <p>{time}</p>
-        <p>{date}</p>
-      </div>
-    </div>
+    <CSSTransition
+      in={show}
+      timeout={300}
+      classNames="command-mode"
+      mountOnEnter
+      unmountOnExit
+    >
+      <CommandMode onClose={onClose} onShowLayoutMode={onShowLayoutMode} />
+    </CSSTransition>
   );
 };
 
-const getTimeString = () => {
-  const date = new Date();
-  const h = date.getHours();
-  const hh = h < 10 ? `0${h}` : h;
-  const m = date.getMinutes();
-  const mm = m < 10 ? `0${m}` : m;
-
-  return `${hh}:${mm}`;
+export type LayoutModeWithTransitionProps = {
+  show: boolean;
+  onClose: VoidFunction;
 };
 
-const getDateString = () => {
-  const date = new Date();
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+const LayoutModeWithTransition: FC<LayoutModeWithTransitionProps> = ({
+  show,
+  onClose,
+}) => {
+  return (
+    <CSSTransition
+      in={show}
+      timeout={300}
+      classNames="layout-mode"
+      mountOnEnter
+      unmountOnExit
+    >
+      <LayoutMode onClose={onClose} />
+    </CSSTransition>
+  );
+};
+
+export type MainScreenWithAppProps = {
+  currentApp: AppInstance;
+  time: string;
+  date: string;
+};
+const MainScreenWithApp: FC<MainScreenWithAppProps> = ({
+  currentApp,
+  time,
+  date,
+}) => {
+  const { name, color } = currentApp;
+
+  return (
+    <>
+      <div className="app-content" style={{ backgroundColor: color }}>
+        <h1>{name}</h1>
+      </div>
+      <TaskBar time={time} date={date} />
+    </>
+  );
+};
+
+export type MainScreenWithoutAppProps = { time: string; date: string };
+
+const MainScreenWithoutApp: FC<MainScreenWithoutAppProps> = ({
+  time,
+  date,
+}) => {
+  return (
+    <>
+      <h2>Gesture OS</h2>
+      <h1>{time}</h1>
+      <h2>{date}</h2>
+      <div className="content">
+        <GestureIndicator
+          hand={Hand.left}
+          sign={Sign.palm}
+          text="Command mode"
+        />
+      </div>
+    </>
+  );
 };
 
 const MainScreen = () => {
+  const gestures = useGestures();
   const [apps] = useApps();
 
   const [timeString, setTimeString] = useState('--:--');
   const [dateString, setDateString] = useState('-----, -- ----');
+
+  const [showCommandMode, setShowCommandMode] = useState(false);
+  const [showLayoutMode, setShowLayoutMode] = useState(false);
+
+  useEffect(() => {
+    gestures.on({ hand: Hand.left, sign: Sign.palm }, () =>
+      setShowCommandMode(true)
+    );
+
+    gestures.onAny(({ hand, sign }) => {
+      if (hand === Hand.left && sign !== Sign.palm) {
+        setShowLayoutMode(false);
+        setShowCommandMode(false);
+      }
+    });
+  }, [gestures]);
 
   useEffect(() => {
     setTimeString(getTimeString());
@@ -81,33 +142,36 @@ const MainScreen = () => {
   const { history } = apps;
   const currentApp = history.find((app) => app.id === apps.selected);
 
+  const onShowLayoutMode = useCallback(() => {
+    setShowCommandMode(false);
+    setShowLayoutMode(true);
+  }, []);
+
+  const onHideLayoutMode = useCallback(() => {
+    setShowLayoutMode(false);
+    setShowCommandMode(true);
+  }, []);
+
   return (
     <div className="main-screen">
+      <LayoutModeWithTransition
+        show={showLayoutMode}
+        onClose={onHideLayoutMode}
+      />
+      <CommandModeWithTransition
+        show={showCommandMode}
+        onClose={() => setShowCommandMode(false)}
+        onShowLayoutMode={onShowLayoutMode}
+      />
       {!currentApp && (
-        <>
-          <h2>Gesture OS</h2>
-          <h1>{timeString}</h1>
-          <h2>{dateString}</h2>
-          <div className="content">
-            <GestureIndicator
-              hand={Hand.left}
-              sign={Sign.palm}
-              text="Command mode"
-            />
-          </div>
-        </>
+        <MainScreenWithoutApp time={timeString} date={dateString} />
       )}
-
       {currentApp && (
-        <>
-          <div
-            className="app-content"
-            style={{ backgroundColor: currentApp.color }}
-          >
-            <h1>{currentApp.name}</h1>
-          </div>
-          <TaskBar time={timeString} date={dateString} />
-        </>
+        <MainScreenWithApp
+          currentApp={currentApp}
+          time={timeString}
+          date={dateString}
+        />
       )}
     </div>
   );

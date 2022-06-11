@@ -7,11 +7,13 @@
   flex-direction: column;
   align-items: center;
 
-  h1 {
+  > h1 {
     font-size: 98px;
+    padding: 20px;
   }
 
-  h2 {
+  > h2 {
+    padding-top: 20px;
     font-size: 42px;
     opacity: 0.8;
   }
@@ -30,7 +32,6 @@
 
     display: flex;
     justify-content: center;
-    align-items: center;
   }
 
   .task-bar {

@@ -21,12 +21,6 @@
   -webkit-backdrop-filter: blur(16px);
 
   border: 1px solid rgba(255, 255, 255, 0.2);
-
-  h1 {
-    padding: 20px;
-    font-size: 40px;
-  }
-
   border-radius: 20px;
   overflow: hidden;
 
@@ -34,8 +28,9 @@
     display: flex;
     width: 100%;
 
-    .command-mode__swipe-up {
-      flex-grow: 1;
+    > * {
+      justify-content: unset;
+      flex: 1;
     }
   }
 

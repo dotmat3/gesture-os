@@ -10,6 +10,7 @@ import EmojiFour from '../../../../assets/emoji-four.svg';
 import EmojiLeftHand from '../../../../assets/emoji-left-hand.svg';
 import EmojiRightHand from '../../../../assets/emoji-right-hand.svg';
 import SwipeUp from '../../../../assets/swipe-up.svg';
+import SwipeDown from '../../../../assets/swipe-down.svg';
 
 import './GestureIndicator.scss';
 
@@ -28,6 +29,8 @@ const getGestureIcon = (hand: Hand, sign: Sign): string => {
       return hand === Hand.left ? EmojiLeftHand : EmojiRightHand;
     case Sign.swipeUp:
       return SwipeUp;
+    case Sign.swipeDown:
+      return SwipeDown;
     case Sign.one:
       return EmojiOne;
     case Sign.two:
