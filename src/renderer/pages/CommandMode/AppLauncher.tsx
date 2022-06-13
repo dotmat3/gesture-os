@@ -1,5 +1,5 @@
-import { FC, useEffect, useRef } from 'react';
-import { AppActionType, AppInstance, useApps } from 'renderer/AppStore';
+import { FC, useEffect } from 'react';
+import { AppActionType, useApps } from 'renderer/AppStore';
 import GestureIndicator from 'renderer/components/GestureIndicator';
 import { Hand, Sign, useGestures } from 'renderer/GesturePrediction';
 
@@ -8,10 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Icon from '../../../../assets/icon.svg';
 
 export type AppTemplate = { name: string; icon: string; color: string };
-export type AppToLaunchProps = AppTemplate & {
-  sign: Sign;
-  onClose: VoidFunction;
-};
+export type AppToLaunchProps = AppTemplate & { sign: Sign };
 
 const defaultAppsToLaunch: Array<AppTemplate> = [
   {
@@ -36,13 +33,7 @@ const defaultAppsToLaunch: Array<AppTemplate> = [
   },
 ];
 
-const AppToLaunch: FC<AppToLaunchProps> = ({
-  sign,
-  name,
-  color,
-  icon,
-  onClose,
-}) => {
+const AppToLaunch: FC<AppToLaunchProps> = ({ sign, name, color, icon }) => {
   const gestures = useGestures();
   const [, appDispatch] = useApps();
 
@@ -52,13 +43,12 @@ const AppToLaunch: FC<AppToLaunchProps> = ({
         type: AppActionType.open,
         payload: { id: uuidv4(), name, icon, color },
       });
-      onClose();
     };
 
     gestures.on({ hand: Hand.right, sign }, onLaunch);
 
     return () => gestures.off({ hand: Hand.right, sign }, onLaunch);
-  }, [appDispatch, color, gestures, icon, name, sign, onClose]);
+  }, [appDispatch, color, gestures, icon, name, sign]);
 
   return (
     <div className="application">
@@ -73,7 +63,7 @@ const AppToLaunch: FC<AppToLaunchProps> = ({
 
 const SIGNS = [Sign.one, Sign.two, Sign.three, Sign.four];
 
-const AppLauncher = ({ onClose }: { onClose: VoidFunction }) => {
+const AppLauncher = () => {
   return (
     <div className="application-launcher">
       {defaultAppsToLaunch.map((app, index) => (
@@ -83,7 +73,6 @@ const AppLauncher = ({ onClose }: { onClose: VoidFunction }) => {
           name={app.name}
           color={app.color}
           icon={app.icon}
-          onClose={onClose}
         />
       ))}
     </div>

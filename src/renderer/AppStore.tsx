@@ -21,6 +21,7 @@ export enum AppActionType {
   select = 'select',
   selectLeft = 'select-left',
   selectRight = 'select-right',
+  changeLayout = 'change-layout',
 }
 
 export type AppAction =
@@ -28,69 +29,107 @@ export type AppAction =
   | { type: AppActionType.close }
   | { type: AppActionType.select; payload: string }
   | { type: AppActionType.selectLeft }
-  | { type: AppActionType.selectRight };
+  | { type: AppActionType.selectRight }
+  | {
+      type: AppActionType.changeLayout;
+      payload: { apps: LayoutApps; blocks: number; configuration: number };
+    };
 
 export type AppDispatcher = (action: AppAction) => void;
-export type AppState = { history: Array<AppInstance>; selected: string | null };
+export type LayoutApps = { [appId in string]: number };
+export type Layout = {
+  apps: LayoutApps;
+  blocks: number;
+  configuration: number;
+};
+export type AppState = {
+  history: Array<AppInstance>;
+  selected: string | null;
+  layout: Layout | null;
+};
 export type AppContext = [AppState, AppDispatcher];
 
 const Context = createContext<AppContext | null>(null);
-const initialState: AppState = { history: [], selected: null };
+const initialState: AppState = { history: [], selected: null, layout: null };
+
+const changeApp = (state: AppState, direction: number) => {
+  const { layout: currentLayout, history, selected: currentAppId } = state;
+
+  const currentAppIndex = history.findIndex((app) => app.id === currentAppId);
+
+  if (currentAppIndex === -1)
+    throw new Error('Selected app not found in the history state');
+
+  const selected = history[mod(currentAppIndex + direction, history.length)].id;
+  const layout = { ...currentLayout } as Layout;
+
+  if (!(selected in layout.apps) && currentAppId) {
+    // Swap previous selected app with new one
+    const index = layout.apps[currentAppId];
+    delete layout.apps[currentAppId];
+    layout.apps[selected] = index;
+  }
+
+  return {
+    ...state,
+    selected,
+    layout,
+  };
+};
 
 const reducer = (state: AppState, action: AppAction): AppState => {
   switch (action.type) {
-    case AppActionType.open:
+    case AppActionType.open: {
+      const { id } = action.payload;
+
       return {
         history: [...state.history, action.payload],
-        selected: action.payload.id,
+        selected: id,
+        layout: {
+          apps: { [id]: 0 },
+          blocks: 1,
+          configuration: 0,
+        },
       };
+    }
     case AppActionType.close: {
       const history = state.history.filter((app) => app.id !== state.selected);
 
       if (history.length === 0)
         return {
+          ...state,
           history,
           selected: null,
         };
 
       const selected = history[history.length - 1].id;
 
-      return { history, selected };
+      return { ...state, history, selected };
     }
     case AppActionType.select:
       return {
         ...state,
         selected: action.payload,
       };
-    case AppActionType.selectLeft: {
-      const { history, selected: currentAppId } = state;
+    case AppActionType.selectLeft:
+      return changeApp(state, -1);
+    case AppActionType.selectRight:
+      return changeApp(state, 1);
+    case AppActionType.changeLayout: {
+      const { selected } = state;
 
-      const currentAppIndex = history.findIndex(
-        (app) => app.id === currentAppId
-      );
+      if (selected && !(selected in action.payload.apps)) {
+        const result = Object.entries(action.payload.apps).find(
+          ([, index]) => index === 0
+        );
+        if (result)
+          return { ...state, selected: result[0], layout: action.payload };
 
-      if (currentAppIndex === -1)
-        throw new Error('Selected app not found in the history state');
+        const appId = Object.keys(action.payload.apps)[0];
+        return { ...state, selected: appId, layout: action.payload };
+      }
 
-      return {
-        ...state,
-        selected: history[mod(currentAppIndex - 1, history.length)].id,
-      };
-    }
-    case AppActionType.selectRight: {
-      const { history, selected: currentAppId } = state;
-
-      const currentAppIndex = history.findIndex(
-        (app) => app.id === currentAppId
-      );
-
-      if (currentAppIndex === -1)
-        throw new Error('Selected app not found in the history state');
-
-      return {
-        ...state,
-        selected: history[mod(currentAppIndex + 1, history.length)].id,
-      };
+      return { ...state, layout: action.payload };
     }
     default:
       return state;

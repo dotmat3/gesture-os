@@ -1,7 +1,8 @@
 import { FC, useEffect, useRef, useState } from 'react';
+
 import { AppActionType, useApps } from 'renderer/AppStore';
-import GestureIndicator from 'renderer/components/GestureIndicator';
 import { Gesture, Hand, Sign, useGestures } from 'renderer/GesturePrediction';
+import GestureIndicator from 'renderer/components/GestureIndicator';
 
 import AppLauncher from './AppLauncher';
 
@@ -12,11 +13,10 @@ const VoiceResult = ({ speechText }: { speechText: string }) => {
 };
 
 export type CommandModeProps = {
-  onClose: VoidFunction;
   onShowLayoutMode: VoidFunction;
 };
 
-const CommandMode: FC<CommandModeProps> = ({ onClose, onShowLayoutMode }) => {
+const CommandMode: FC<CommandModeProps> = ({ onShowLayoutMode }) => {
   const gestures = useGestures();
   const [apps, appDispatch] = useApps();
 
@@ -101,7 +101,7 @@ const CommandMode: FC<CommandModeProps> = ({ onClose, onShowLayoutMode }) => {
       gestures.off({ hand: Hand.right, sign: Sign.swipeRight }, onSwipeRight);
       gestures.off({ hand: Hand.right, sign: Sign.swipeDown }, onSwipeDown);
     };
-  }, [gestures, appDispatch, onShowLayoutMode]);
+  }, [gestures, appDispatch]);
 
   useEffect(() => {
     const onSwipeUp = () => {
@@ -146,7 +146,7 @@ const CommandMode: FC<CommandModeProps> = ({ onClose, onShowLayoutMode }) => {
         </div>
         <div className="command-mode__content">
           {voiceActive && <VoiceResult speechText={speechText} />}
-          {!voiceActive && <AppLauncher onClose={onClose} />}
+          {!voiceActive && <AppLauncher />}
         </div>
       </div>
     </>

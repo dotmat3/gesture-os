@@ -18,20 +18,23 @@
     opacity: 0.8;
   }
 
-  .content {
+  .main-screen__content {
     padding: 140px;
     display: flex;
     flex-direction: column;
     align-items: center;
   }
 
-  .app-content {
+  .main-screen__app-content {
+    width: 100%;
     flex-grow: 1;
 
-    width: 100%;
-
-    display: flex;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    grid-template-areas:
+      'app1 app1'
+      'app1 app1';
   }
 
   .task-bar {
@@ -39,7 +42,7 @@
     align-items: center;
 
     width: calc(100% - 40px);
-    height: 100px;
+    height: 80px;
 
     background-color: #1d64b4;
     padding: 0 20px;

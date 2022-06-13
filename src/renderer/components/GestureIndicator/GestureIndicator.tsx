@@ -11,6 +11,8 @@ import EmojiLeftHand from '../../../../assets/emoji-left-hand.svg';
 import EmojiRightHand from '../../../../assets/emoji-right-hand.svg';
 import SwipeUp from '../../../../assets/swipe-up.svg';
 import SwipeDown from '../../../../assets/swipe-down.svg';
+import SwipeLeft from '../../../../assets/swipe-left.svg';
+import SwipeRight from '../../../../assets/swipe-right.svg';
 
 import './GestureIndicator.scss';
 
@@ -21,6 +23,8 @@ export type GestureIndicatorProps = {
   hideIndication?: boolean;
   horizontal?: boolean;
   swap?: boolean;
+  big?: boolean;
+  progress?: number;
 };
 
 const getGestureIcon = (hand: Hand, sign: Sign): string => {
@@ -31,6 +35,10 @@ const getGestureIcon = (hand: Hand, sign: Sign): string => {
       return SwipeUp;
     case Sign.swipeDown:
       return SwipeDown;
+    case Sign.swipeLeft:
+      return SwipeLeft;
+    case Sign.swipeRight:
+      return SwipeRight;
     case Sign.one:
       return EmojiOne;
     case Sign.two:
@@ -46,46 +54,69 @@ const getGestureIcon = (hand: Hand, sign: Sign): string => {
 
 const GestureIndicator: FC<
   GestureIndicatorProps & HTMLAttributes<HTMLDivElement>
-> = ({ hand, sign, text, hideIndication, className, horizontal, swap }) => {
+> = ({
+  hand,
+  sign,
+  text,
+  hideIndication,
+  className,
+  horizontal,
+  swap,
+  big,
+  progress,
+}) => {
   const rootClassName = classNames(
     'gesture-indicator',
     className,
     { horizontal },
-    { swap }
+    { swap },
+    { big }
+  );
+
+  const ProgressComponent = (
+    <div
+      className="gesture-indicator__progress"
+      style={{ height: `${progress}%` }}
+    />
+  );
+
+  const TextComponent = !hideIndication && (
+    <p className="gesture-indicator__text">
+      {hand} {sign}
+    </p>
+  );
+
+  const IconComponent = (
+    <img
+      src={getGestureIcon(hand, sign)}
+      alt="gesture-icon"
+      className="gesture-indicator__icon"
+    />
+  );
+
+  const AdditionalTextComponent = text && (
+    <p className="gesture-indicator__additional-text">{text}</p>
   );
 
   if (horizontal)
     return (
       <div className={rootClassName}>
-        <img
-          src={getGestureIcon(hand, sign)}
-          alt="gesture-icon"
-          className="gesture-indicator__icon"
-        />
+        {IconComponent}
         <div className="gesture-indicator__vbox">
-          {text && <p className="gesture-indicator__additional-text">{text}</p>}
-          {!hideIndication && (
-            <p className="gesture-indicator__text">
-              {hand} {sign}
-            </p>
-          )}
+          {AdditionalTextComponent}
+          {TextComponent}
         </div>
+
+        {ProgressComponent}
       </div>
     );
 
   return (
     <div className={rootClassName}>
-      {text && <p className="gesture-indicator__additional-text">{text}</p>}
-      <img
-        src={getGestureIcon(hand, sign)}
-        alt="gesture-icon"
-        className="gesture-indicator__icon"
-      />
-      {!hideIndication && (
-        <p className="gesture-indicator__text">
-          {hand} {sign}
-        </p>
-      )}
+      {AdditionalTextComponent}
+      {IconComponent}
+      {TextComponent}
+      {ProgressComponent}
     </div>
   );
 };
@@ -95,6 +126,8 @@ GestureIndicator.defaultProps = {
   hideIndication: false,
   horizontal: false,
   swap: false,
+  big: false,
+  progress: 0,
 };
 
 export default GestureIndicator;

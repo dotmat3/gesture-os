@@ -3,10 +3,62 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+
+  position: relative;
+  z-index: 0;
 
   &.swap {
     flex-direction: column-reverse;
+  }
+
+  &.big {
+    .gesture-indicator__icon {
+      width: 70px;
+      height: 70px;
+    }
+
+    .gesture-indicator__text {
+      color: #ffdd67;
+      font-size: 22px;
+      text-transform: capitalize;
+      padding: 10px 0;
+    }
+
+    .gesture-indicator__additional-text {
+      font-size: 22px;
+      padding: 10px 0;
+    }
+  }
+
+  .gesture-indicator__icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .gesture-indicator__text {
+    color: #ffdd67;
+    font-size: 1.3em;
+    text-transform: capitalize;
+    padding: 5px 0;
+  }
+
+  .gesture-indicator__additional-text {
+    font-size: 1.2em;
+    padding: 5px 0;
+  }
+
+  .gesture-indicator__progress {
+    background-color: white;
+    opacity: 0.3;
+
+    transition: all 200ms;
+
+    width: 100%;
+    height: 100%;
+
+    position: absolute;
+    bottom: 0;
+    left: 0;
   }
 
   &.horizontal {
@@ -25,22 +77,5 @@
     .gesture-indicator__additional-text {
       padding: 0 10px;
     }
-  }
-
-  .gesture-indicator__icon {
-    width: 70px;
-    height: 70px;
-  }
-
-  .gesture-indicator__text {
-    color: #ffdd67;
-    font-size: 22px;
-    text-transform: capitalize;
-    padding: 10px 0;
-  }
-
-  .gesture-indicator__additional-text {
-    font-size: 22px;
-    padding: 10px 0;
   }
 }

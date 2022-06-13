@@ -1,12 +1,12 @@
-import { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CSSTransition } from 'react-transition-group';
 
 import { AppInstance, useApps } from 'renderer/AppStore';
 import { Hand, Sign, useGestures } from 'renderer/GesturePrediction';
-import { getDateString, getTimeString } from 'renderer/utils';
-
+import AppWindow from 'renderer/components/AppWindow';
 import GestureIndicator from 'renderer/components/GestureIndicator';
+import { computeLayout, getDateString, getTimeString } from 'renderer/utils';
 
 import CommandMode from '../CommandMode';
 import LayoutMode from '../LayoutMode';
@@ -16,13 +16,11 @@ import './MainScreen.scss';
 
 export type CommandModeWithTransitionProps = {
   show: boolean;
-  onClose: VoidFunction;
   onShowLayoutMode: VoidFunction;
 };
 
 const CommandModeWithTransition: FC<CommandModeWithTransitionProps> = ({
   show,
-  onClose,
   onShowLayoutMode,
 }) => {
   return (
@@ -33,7 +31,7 @@ const CommandModeWithTransition: FC<CommandModeWithTransitionProps> = ({
       mountOnEnter
       unmountOnExit
     >
-      <CommandMode onClose={onClose} onShowLayoutMode={onShowLayoutMode} />
+      <CommandMode onShowLayoutMode={onShowLayoutMode} />
     </CSSTransition>
   );
 };
@@ -61,21 +59,42 @@ const LayoutModeWithTransition: FC<LayoutModeWithTransitionProps> = ({
 };
 
 export type MainScreenWithAppProps = {
-  currentApp: AppInstance;
   time: string;
   date: string;
 };
-const MainScreenWithApp: FC<MainScreenWithAppProps> = ({
-  currentApp,
-  time,
-  date,
-}) => {
-  const { name, color } = currentApp;
+
+const MainScreenWithApp: FC<MainScreenWithAppProps> = ({ time, date }) => {
+  const [apps] = useApps();
+
+  const gridTemplateAreas = useMemo(() => {
+    if (apps.layout)
+      return computeLayout(apps.layout.blocks, apps.layout.configuration);
+    return '';
+  }, [apps.layout]);
+
+  const renderIfInLayout = useCallback(
+    ({ id, name, icon, color }: AppInstance) => {
+      if (apps.layout && id in apps.layout.apps)
+        return (
+          <AppWindow
+            key={id}
+            id={id}
+            name={name}
+            icon={icon}
+            color={color}
+            selected={id === apps.selected}
+          />
+        );
+
+      return null;
+    },
+    [apps.layout, apps.selected]
+  );
 
   return (
     <>
-      <div className="app-content" style={{ backgroundColor: color }}>
-        <h1>{name}</h1>
+      <div className="main-screen__app-content" style={{ gridTemplateAreas }}>
+        {apps.history.map(renderIfInLayout)}
       </div>
       <TaskBar time={time} date={date} />
     </>
@@ -93,11 +112,12 @@ const MainScreenWithoutApp: FC<MainScreenWithoutAppProps> = ({
       <h2>Gesture OS</h2>
       <h1>{time}</h1>
       <h2>{date}</h2>
-      <div className="content">
+      <div className="main-screen__content">
         <GestureIndicator
           hand={Hand.left}
           sign={Sign.palm}
           text="Command mode"
+          big
         />
       </div>
     </>
@@ -139,9 +159,6 @@ const MainScreen = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const { history } = apps;
-  const currentApp = history.find((app) => app.id === apps.selected);
-
   const onShowLayoutMode = useCallback(() => {
     setShowCommandMode(false);
     setShowLayoutMode(true);
@@ -160,18 +177,13 @@ const MainScreen = () => {
       />
       <CommandModeWithTransition
         show={showCommandMode}
-        onClose={() => setShowCommandMode(false)}
         onShowLayoutMode={onShowLayoutMode}
       />
-      {!currentApp && (
+      {!apps.selected && (
         <MainScreenWithoutApp time={timeString} date={dateString} />
       )}
-      {currentApp && (
-        <MainScreenWithApp
-          currentApp={currentApp}
-          time={timeString}
-          date={dateString}
-        />
+      {apps.selected && (
+        <MainScreenWithApp time={timeString} date={dateString} />
       )}
     </div>
   );
