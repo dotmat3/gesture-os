@@ -77,20 +77,20 @@ export class WindowQueue<T> {
 
   head: number;
 
-  size: number;
+  maxSize: number;
 
-  constructor(size: number) {
+  constructor(maxSize: number) {
     this.queue = {};
     this.head = 0;
     this.tail = 0;
-    this.size = size;
+    this.maxSize = maxSize;
   }
 
   enqueue(element: T) {
     this.queue[this.tail] = element;
-    if (this.tail - this.head + 1 > this.size) this.dequeue();
-
     this.tail += 1;
+
+    if (this.length > this.maxSize) this.dequeue();
   }
 
   dequeue() {
@@ -102,8 +102,24 @@ export class WindowQueue<T> {
     return element;
   }
 
+  getHead() {
+    return this.queue[this.head];
+  }
+
+  getTail() {
+    return this.queue[this.tail];
+  }
+
   getElements() {
     return Object.values(this.queue);
+  }
+
+  get length() {
+    return this.tail - this.head;
+  }
+
+  isFull() {
+    return this.length === this.maxSize;
   }
 }
 

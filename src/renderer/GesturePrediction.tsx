@@ -74,18 +74,34 @@ class GestureManager {
 
   gesturesMap: GesturesMap = {};
 
+  gestureFrequency: { [index: string]: number } = {};
+
   keyboardGestures = {
     [Hand.left]: { label: Sign.none, confidence: 100 },
     [Hand.right]: { label: Sign.none, confidence: 100 },
   };
+
+  addGesture(gesture: Gesture) {
+    const index = gestureToString(gesture);
+    if (index in this.gestureFrequency) this.gestureFrequency[index] += 1;
+    else this.gestureFrequency[index] = 1;
+
+    if (this.gestureWindow[gesture.hand].isFull()) {
+      const head = this.gestureWindow[gesture.hand].getHead();
+      const headIndex = gestureToString(head);
+      this.gestureFrequency[headIndex] -= 1;
+    }
+
+    this.gestureWindow[gesture.hand].enqueue(gesture);
+  }
 
   processGesture = (prediction: GesturePredictionType) => {
     const { left, right } = prediction;
     const leftGesture = { hand: Hand.left, sign: left.label };
     const rightGesture = { hand: Hand.right, sign: right.label };
 
-    this.gestureWindow[Hand.left].enqueue(leftGesture);
-    this.gestureWindow[Hand.right].enqueue(rightGesture);
+    this.addGesture(leftGesture);
+    this.addGesture(rightGesture);
 
     const leftLabel = gestureToString(leftGesture);
     const rightLabel = gestureToString(rightGesture);
@@ -129,19 +145,6 @@ class GestureManager {
     );
   };
 
-  getGestureFrequency = (hand: Hand) => {
-    type FrequencyMap = { [gesture: string]: number };
-    const frequency: FrequencyMap = {};
-
-    this.gestureWindow[hand].getElements().forEach((gesture) => {
-      const gestureString = gestureToString(gesture);
-      if (!(gestureString in frequency)) frequency[gestureString] = 1;
-      else frequency[gestureString] += 1;
-    });
-
-    return frequency;
-  };
-
   on = (gesture: Gesture, callback: GestureCallback) => {
     const index = gestureToString(gesture);
 
@@ -179,14 +182,15 @@ class GestureManager {
     onCountUpdate?: CountCallback
   ) => {
     const countCallback: GestureCallback = (_gesture) => {
-      const index = gestureToString(_gesture);
-      const frequency = this.getGestureFrequency(_gesture.hand)[index];
+      const index = gestureToString(gesture);
+      const frequency = this.gestureFrequency[index];
       if (onCountUpdate) onCountUpdate(_gesture, frequency);
 
-      if (frequency === count) onComplete(_gesture);
+      if (index === gestureToString(_gesture) && frequency === count)
+        onComplete(_gesture);
     };
 
-    return this.on(gesture, countCallback);
+    return this.onAny(countCallback);
   };
 
   offCount = (gesture: Gesture, callback: GestureCallback) =>

@@ -1,6 +1,12 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import { FC, HTMLAttributes } from 'react';
-import { Hand, Sign } from 'renderer/GesturePrediction';
+import { FC, HTMLAttributes, useEffect, useState } from 'react';
+import {
+  Gesture,
+  GestureCallback,
+  Hand,
+  Sign,
+  useGestures,
+} from 'renderer/GesturePrediction';
 
 import classNames from 'classnames';
 import EmojiOne from '../../../../assets/emoji-one.svg';
@@ -24,7 +30,8 @@ export type GestureIndicatorProps = {
   horizontal?: boolean;
   swap?: boolean;
   big?: boolean;
-  progress?: number;
+  countRequired?: number;
+  onTrigger?: GestureCallback;
 };
 
 const getGestureIcon = (hand: Hand, sign: Sign): string => {
@@ -63,8 +70,38 @@ const GestureIndicator: FC<
   horizontal,
   swap,
   big,
-  progress,
+  countRequired,
+  onTrigger,
 }) => {
+  const gestures = useGestures();
+  const [currentProgress, setCurrentProgress] = useState(0);
+
+  useEffect(() => {
+    const gesture = { hand, sign };
+
+    const onComplete = () => {
+      if (onTrigger) onTrigger(gesture);
+      setTimeout(() => setCurrentProgress(0), 500);
+    };
+
+    const onCountUpdate = (_gesture: Gesture, count: number) => {
+      if (countRequired) setCurrentProgress((count / countRequired) * 100);
+    };
+
+    let countCallback: GestureCallback | null = null;
+    if (countRequired) {
+      countCallback = gestures.onCount(
+        gesture,
+        countRequired,
+        onComplete,
+        onCountUpdate
+      );
+    }
+    return () => {
+      if (countCallback) gestures.offCount(gesture, countCallback);
+    };
+  }, [gestures, hand, countRequired, sign, onTrigger]);
+
   const rootClassName = classNames(
     'gesture-indicator',
     className,
@@ -76,7 +113,7 @@ const GestureIndicator: FC<
   const ProgressComponent = (
     <div
       className="gesture-indicator__progress"
-      style={{ height: `${progress}%` }}
+      style={{ height: `${currentProgress}%` }}
     />
   );
 
@@ -127,7 +164,8 @@ GestureIndicator.defaultProps = {
   horizontal: false,
   swap: false,
   big: false,
-  progress: 0,
+  countRequired: undefined,
+  onTrigger: undefined,
 };
 
 export default GestureIndicator;
