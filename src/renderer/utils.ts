@@ -70,4 +70,47 @@ export const computeLayout = (
   }
 };
 
-export default { mod, computeLayout, getTimeString, getDateString };
+export class WindowQueue<T> {
+  queue: { [index: number]: T };
+
+  tail: number;
+
+  head: number;
+
+  size: number;
+
+  constructor(size: number) {
+    this.queue = {};
+    this.head = 0;
+    this.tail = 0;
+    this.size = size;
+  }
+
+  enqueue(element: T) {
+    this.queue[this.tail] = element;
+    if (this.tail - this.head + 1 > this.size) this.dequeue();
+
+    this.tail += 1;
+  }
+
+  dequeue() {
+    if (this.tail === this.head) return undefined;
+
+    const element = this.queue[this.head];
+    delete this.queue[this.head];
+    this.head += 1;
+    return element;
+  }
+
+  getElements() {
+    return Object.values(this.queue);
+  }
+}
+
+export default {
+  mod,
+  computeLayout,
+  getTimeString,
+  getDateString,
+  WindowQueue,
+};

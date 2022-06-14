@@ -1,13 +1,5 @@
-import {
-  createContext,
-  PropsWithChildren,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { createContext, PropsWithChildren, useContext, useEffect } from 'react';
+import { WindowQueue } from './utils';
 
 export enum Hand {
   left = 'left',
@@ -30,9 +22,17 @@ export enum Sign {
 export type Gesture = { hand: Hand; sign: Sign };
 
 export type GestureCallback = (gesture: Gesture) => void;
+export type CountCallback = (gesture: Gesture, count: number) => void;
+
 export type GesturePrediction = {
   on: (gesture: Gesture, callback: GestureCallback) => void;
   onAny: (callback: GestureCallback) => void;
+  onCount: (
+    gesture: Gesture,
+    count: number,
+    onComplete: GestureCallback,
+    onCountUpdate: CountCallback
+  ) => void;
   off: (gesture: Gesture, callback: GestureCallback) => void;
   offAny: (callback: GestureCallback) => void;
 };
@@ -45,8 +45,6 @@ export type GesturePredictionType = {
   left: HandPrediction;
   right: HandPrediction;
 };
-
-const Context = createContext<GesturePrediction | null>(null);
 
 const KEYBOARD_MAP: { [keyCode in string]: Gesture } = {
   a: { hand: Hand.left, sign: Sign.palm },
@@ -62,125 +60,152 @@ const KEYBOARD_MAP: { [keyCode in string]: Gesture } = {
   ' ': { hand: Hand.left, sign: Sign.none },
 };
 
-const gestureToString = (gesture: Gesture) => {
+export const gestureToString = (gesture: Gesture) => {
   return `${gesture.hand}_${gesture.sign}`;
 };
 
-export const GestureProvider = ({
-  children,
-}: PropsWithChildren<Record<string, unknown>>) => {
-  const gestureContext = useRef<GesturePrediction | null>(null);
+export const GESTURE_WINDOW_SIZE = 5;
 
-  const [gesturesMap, setGesturesMap] = useState<GesturesMap>({});
+class GestureManager {
+  gestureWindow = {
+    [Hand.left]: new WindowQueue<Gesture>(GESTURE_WINDOW_SIZE),
+    [Hand.right]: new WindowQueue<Gesture>(GESTURE_WINDOW_SIZE),
+  };
 
-  useEffect(() => {
+  gesturesMap: GesturesMap = {};
+
+  keyboardGestures = {
+    [Hand.left]: { label: Sign.none, confidence: 100 },
+    [Hand.right]: { label: Sign.none, confidence: 100 },
+  };
+
+  processGesture = (prediction: GesturePredictionType) => {
+    const { left, right } = prediction;
+    const leftGesture = { hand: Hand.left, sign: left.label };
+    const rightGesture = { hand: Hand.right, sign: right.label };
+
+    this.gestureWindow[Hand.left].enqueue(leftGesture);
+    this.gestureWindow[Hand.right].enqueue(rightGesture);
+
+    const leftLabel = gestureToString(leftGesture);
+    const rightLabel = gestureToString(rightGesture);
+
+    const leftCallbacks = this.gesturesMap[leftLabel];
+    if (leftCallbacks)
+      leftCallbacks.forEach((callback) => callback(leftGesture));
+
+    const rightCallbacks = this.gesturesMap[rightLabel];
+    if (rightCallbacks)
+      rightCallbacks.forEach((callback) => callback(rightGesture));
+  };
+
+  register = () => {
     // eslint-disable-next-line no-console
-    console.debug('Register gesture listeners');
+    console.debug('GestureManager registered');
 
-    const listener = (prediction: GesturePredictionType) => {
-      const { left, right } = prediction;
-
-      const leftLabel = `left_${left.label}`;
-      const rightLabel = `right_${right.label}`;
-
-      const leftCallbacks = gesturesMap[leftLabel];
-      if (leftCallbacks)
-        leftCallbacks.forEach((callback) =>
-          callback({ hand: Hand.left, sign: left.label })
-        );
-
-      const rightCallbacks = gesturesMap[rightLabel];
-      if (rightCallbacks)
-        rightCallbacks.forEach((callback) =>
-          callback({ hand: Hand.right, sign: right.label })
-        );
-    };
     window.electron.ipcRenderer.on(
       'gesture-prediction',
-      listener as (prediction: unknown) => void
+      this.processGesture as (prediction: unknown) => void
     );
 
     window.onkeydown = (event) => {
       const code = event.key;
       const gesture = KEYBOARD_MAP[code];
+
       if (gesture) {
-        const callbacks = gesturesMap[gestureToString(gesture)];
-        if (callbacks) callbacks.forEach((callback) => callback(gesture));
+        this.keyboardGestures[gesture.hand].label = gesture.sign;
+        this.processGesture(this.keyboardGestures);
       }
     };
+  };
 
-    return () => {
-      // eslint-disable-next-line no-console
-      console.debug('Cleanup!');
-      window.electron.ipcRenderer.off(
-        'gesture-prediction',
-        listener as (prediction: unknown) => void
+  unregister = () => {
+    // eslint-disable-next-line no-console
+    console.debug('GestureManager unregistered');
+
+    window.electron.ipcRenderer.off(
+      'gesture-prediction',
+      this.processGesture as (prediction: unknown) => void
+    );
+  };
+
+  getGestureFrequency = (hand: Hand) => {
+    type FrequencyMap = { [gesture: string]: number };
+    const frequency: FrequencyMap = {};
+
+    this.gestureWindow[hand].getElements().forEach((gesture) => {
+      const gestureString = gestureToString(gesture);
+      if (!(gestureString in frequency)) frequency[gestureString] = 1;
+      else frequency[gestureString] += 1;
+    });
+
+    return frequency;
+  };
+
+  on = (gesture: Gesture, callback: GestureCallback) => {
+    const index = gestureToString(gesture);
+
+    if (index in this.gesturesMap) this.gesturesMap[index]?.push(callback);
+    else this.gesturesMap[index] = [callback];
+
+    return callback;
+  };
+
+  off = (gesture: Gesture, callback: GestureCallback) => {
+    const index = gestureToString(gesture);
+    if (index in this.gesturesMap)
+      this.gesturesMap[index] = this.gesturesMap[index]?.filter(
+        (fn) => callback !== fn
       );
+  };
+
+  onAny = (callback: GestureCallback) => {
+    Object.values(Hand).forEach((hand) =>
+      Object.values(Sign).forEach((sign) => this.on({ hand, sign }, callback))
+    );
+    return callback;
+  };
+
+  offAny = (callback: GestureCallback) => {
+    Object.values(Hand).forEach((hand) =>
+      Object.values(Sign).forEach((sign) => this.off({ hand, sign }, callback))
+    );
+  };
+
+  onCount = (
+    gesture: Gesture,
+    count: number,
+    onComplete: GestureCallback,
+    onCountUpdate?: CountCallback
+  ) => {
+    const countCallback: GestureCallback = (_gesture) => {
+      const index = gestureToString(_gesture);
+      const frequency = this.getGestureFrequency(_gesture.hand)[index];
+      if (onCountUpdate) onCountUpdate(_gesture, frequency);
+
+      if (frequency === count) onComplete(_gesture);
     };
-  }, [gesturesMap]);
 
-  const on = useCallback((gesture: Gesture, callback: GestureCallback) => {
-    setGesturesMap((prev) => {
-      const index = gestureToString(gesture);
-      if (index in prev) {
-        prev[index]?.push(callback);
-      } else {
-        prev[index] = [callback];
-      }
-      return prev;
-    });
+    return this.on(gesture, countCallback);
+  };
+
+  offCount = (gesture: Gesture, callback: GestureCallback) =>
+    this.off(gesture, callback);
+}
+
+const instance = new GestureManager();
+export const Context = createContext<GestureManager>(instance);
+
+export const GestureProvider = ({
+  children,
+}: PropsWithChildren<Record<string, unknown>>) => {
+  useEffect(() => {
+    instance.register();
+
+    return () => instance.unregister();
   }, []);
 
-  const off = useCallback((gesture: Gesture, callback: GestureCallback) => {
-    setGesturesMap((prev) => {
-      const index = gestureToString(gesture);
-      if (index in prev)
-        prev[index] = prev[index]?.filter((fn) => callback !== fn);
-      return prev;
-    });
-  }, []);
-
-  const onAny = useCallback((callback: GestureCallback) => {
-    setGesturesMap((prev) => {
-      Object.values(Hand).forEach((hand) => {
-        Object.values(Sign).forEach((sign) => {
-          const index = gestureToString({ hand, sign });
-          if (index in prev) {
-            prev[index]?.push(callback);
-          } else {
-            prev[index] = [callback];
-          }
-        });
-      });
-      return prev;
-    });
-  }, []);
-
-  const offAny = useCallback((callback: GestureCallback) => {
-    setGesturesMap((prev) => {
-      Object.values(Hand).forEach((hand) => {
-        Object.values(Sign).forEach((sign) => {
-          const index = gestureToString({ hand, sign });
-          if (index in prev)
-            prev[index] = prev[index]?.filter((fn) => callback !== fn);
-        });
-      });
-      return prev;
-    });
-  }, []);
-
-  gestureContext.current = { on, off, onAny, offAny };
-
-  return (
-    <Context.Provider value={gestureContext.current}>
-      {children}
-    </Context.Provider>
-  );
+  return <Context.Provider value={instance}>{children}</Context.Provider>;
 };
 
-export const useGestures = (): GesturePrediction => {
-  const gesturesContext = useContext(Context);
-  const gestures = useMemo(() => gesturesContext, [gesturesContext]);
-  if (gestures === null) throw Error('Context has not been Provided!');
-  return gestures;
-};
+export const useGestures = () => useContext(Context);
