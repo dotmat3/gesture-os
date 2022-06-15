@@ -1,6 +1,6 @@
 /* eslint-disable guard-for-in */
 /* eslint-disable no-restricted-syntax */
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   AppActionType,
@@ -8,7 +8,12 @@ import {
   LayoutApps,
   useApps,
 } from 'renderer/AppStore';
-import { Hand, Sign, useGestures } from 'renderer/GesturePrediction';
+import {
+  GestureCallback,
+  Hand,
+  Sign,
+  useGestures,
+} from 'renderer/GesturePrediction';
 import GestureIndicator from 'renderer/components/GestureIndicator';
 import { computeLayout } from 'renderer/utils';
 
@@ -26,8 +31,12 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
     [letter in string]: AppInstance;
   }>({});
 
-  const [tempApp, setTempApp] = useState('0');
-  const [tempLetter, setTempLetter] = useState('');
+  const [voiceActive, setVoiceActive] = useState(false);
+  const voiceActiveRef = useRef(voiceActive);
+
+  useEffect(() => {
+    voiceActiveRef.current = voiceActive;
+  }, [voiceActive]);
 
   const { layout } = apps;
 
@@ -54,6 +63,19 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
 
     onClose();
   }, [appDispatch, assignedApps, blocks, configuration, onClose]);
+
+  const assignApp = useCallback(
+    (appIndex: number, letter: string) => {
+      if (!['A', 'B', 'C', 'D'].includes(letter.toUpperCase())) return;
+      if (letter.charCodeAt(0) - 'A'.charCodeAt(0) + 1 > blocks) return;
+      if (appIndex > apps.history.length) return;
+      const app = apps.history[appIndex - 1];
+      // eslint-disable-next-line no-console
+      console.debug('Assigning', app.name, 'to', letter);
+      setAssignedApps((prev) => ({ ...prev, [letter]: app }));
+    },
+    [apps.history, blocks]
+  );
 
   useEffect(() => {
     const onSwipeUp = () => applyLayout();
@@ -125,19 +147,61 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
     };
   }, [gestures]);
 
+  useEffect(() => {
+    const activateVoiceCommands = () => {
+      if (voiceActiveRef.current) return;
+      window.electron.ipcRenderer.sendMessage('start-speech-recognition');
+      setVoiceActive(true);
+    };
+
+    const onAnyHandler: GestureCallback = (gesture) => {
+      if (
+        voiceActiveRef.current &&
+        gesture.hand === Hand.right &&
+        gesture.sign !== Sign.palm
+      ) {
+        window.electron.ipcRenderer.sendMessage('stop-speech-recognition');
+        setVoiceActive(false);
+      }
+    };
+
+    const speechListener = (text: string) => {
+      const commands = text
+        .toLowerCase()
+        .replace(' ', '')
+        .match(/[a-d]\d/g);
+      commands?.forEach((command) => {
+        const letter = command.charAt(0).toUpperCase();
+        const number = parseInt(command.charAt(1), 10);
+        assignApp(number, letter);
+      });
+    };
+
+    gestures.on({ hand: Hand.right, sign: Sign.palm }, activateVoiceCommands);
+    gestures.onAny(onAnyHandler);
+
+    window.electron.ipcRenderer.on(
+      'speech-preview',
+      speechListener as (text: unknown) => void
+    );
+
+    return () => {
+      gestures.off(
+        { hand: Hand.right, sign: Sign.palm },
+        activateVoiceCommands
+      );
+      gestures.offAny(onAnyHandler);
+      window.electron.ipcRenderer.off(
+        'speech-preview',
+        speechListener as (text: unknown) => void
+      );
+    };
+  }, [assignApp, gestures]);
+
   const gridTemplateAreas = useMemo(
     () => computeLayout(blocks, configuration),
     [blocks, configuration]
   );
-
-  const assignApp = useCallback(() => {
-    const app = apps.history[parseInt(tempApp, 10)];
-    // eslint-disable-next-line no-console
-    console.debug('Assigning', app.name, 'to', tempLetter);
-    setAssignedApps((prev) => {
-      return { ...prev, [tempLetter]: app };
-    });
-  }, [apps.history, tempApp, tempLetter]);
 
   const renderAppPreview = useCallback(
     (index: number) => {
@@ -176,27 +240,7 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
   return (
     <div className="layout-mode__preview" style={{ gridTemplateAreas }}>
       {[...Array(blocks)].map((_, index) => renderAppPreview(index))}
-      <div style={{ display: 'flex' }}>
-        <select
-          value={tempApp}
-          onChange={(e) => setTempApp(e.currentTarget.value)}
-        >
-          {apps.history.map((app, index) => (
-            <option key={app.id} value={index}>
-              {app.name}
-            </option>
-          ))}
-        </select>
-        <input
-          type="text"
-          placeholder="Letter"
-          value={tempLetter}
-          onChange={(e) => setTempLetter(e.currentTarget.value)}
-        />
-        <button type="submit" onClick={assignApp}>
-          Add
-        </button>
-      </div>
+      <p>Voice active: {voiceActive.toString()}</p>
     </div>
   );
 };
