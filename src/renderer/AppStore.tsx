@@ -97,14 +97,45 @@ const reducer = (state: AppState, action: AppAction): AppState => {
 
       if (history.length === 0)
         return {
-          ...state,
+          layout: null,
           history,
           selected: null,
         };
 
-      const selected = history[history.length - 1].id;
+      const { layout } = state;
 
-      return { ...state, history, selected };
+      if (!layout) throw new Error('Layout undefined when closing app');
+
+      if (Object.keys(layout.apps).length === 1) {
+        const selected = history[history.length - 1].id;
+
+        return {
+          ...state,
+          layout: {
+            blocks: 1,
+            configuration: 0,
+            apps: { [selected]: 0 },
+          },
+          history,
+          selected,
+        };
+      }
+
+      const lastIndex = history
+        .map((app) => app.id in layout.apps)
+        .lastIndexOf(true);
+
+      if (!state.selected)
+        throw new Error('Selected undefined when closing app');
+
+      const apps = { ...layout.apps };
+      delete apps[state.selected];
+
+      return {
+        layout: { ...layout, apps },
+        history,
+        selected: history[lastIndex].id,
+      };
     }
     case AppActionType.select:
       return {
