@@ -3,7 +3,12 @@ import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { AppInstance, useApps } from 'renderer/AppStore';
-import { Hand, Sign, useGestures } from 'renderer/GesturePrediction';
+import {
+  GestureCallback,
+  Hand,
+  Sign,
+  useGestures,
+} from 'renderer/GesturePrediction';
 import AppWindow from 'renderer/components/AppWindow';
 import GestureIndicator from 'renderer/components/GestureIndicator';
 import { computeLayout, getDateString, getTimeString } from 'renderer/utils';
@@ -135,17 +140,24 @@ const MainScreen = () => {
   const [showLayoutMode, setShowLayoutMode] = useState(false);
 
   useEffect(() => {
-    gestures.on({ hand: Hand.left, sign: Sign.palm }, () =>
-      setShowCommandMode(true)
-    );
-
-    gestures.onAny(({ hand, sign }) => {
+    const onPalm = () => {
+      if (!showLayoutMode) setShowCommandMode(true);
+    };
+    const onAny: GestureCallback = ({ hand, sign }) => {
       if (hand === Hand.left && sign !== Sign.palm) {
         setShowLayoutMode(false);
         setShowCommandMode(false);
       }
-    });
-  }, [gestures]);
+    };
+
+    gestures.on({ hand: Hand.left, sign: Sign.palm }, onPalm);
+    gestures.onAny(onAny);
+
+    return () => {
+      gestures.off({ hand: Hand.left, sign: Sign.palm }, onPalm);
+      gestures.offAny(onAny);
+    };
+  }, [gestures, showLayoutMode]);
 
   useEffect(() => {
     setTimeString(getTimeString());
