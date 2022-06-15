@@ -3,6 +3,7 @@ import { FC, useEffect, useRef, useState } from 'react';
 import { AppActionType, useApps } from 'renderer/AppStore';
 import { Gesture, Hand, Sign, useGestures } from 'renderer/GesturePrediction';
 import GestureIndicator from 'renderer/components/GestureIndicator';
+import Popup from 'renderer/components/Popup';
 
 import AppLauncher from './AppLauncher';
 
@@ -20,7 +21,8 @@ const CommandMode: FC<CommandModeProps> = ({ onShowLayoutMode }) => {
   const gestures = useGestures();
   const [apps, appDispatch] = useApps();
 
-  const [voiceActive, setVoiceActive] = useState<boolean>(false);
+  const [voiceActive, setVoiceActive] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
 
   const [speechText, setSpeechText] = useState('');
 
@@ -90,7 +92,7 @@ const CommandMode: FC<CommandModeProps> = ({ onShowLayoutMode }) => {
   useEffect(() => {
     const onSwipeLeft = () => appDispatch({ type: AppActionType.selectLeft });
     const onSwipeRight = () => appDispatch({ type: AppActionType.selectRight });
-    const onSwipeDown = () => appDispatch({ type: AppActionType.close });
+    const onSwipeDown = () => setShowPopup(true);
 
     gestures.on({ hand: Hand.right, sign: Sign.swipeLeft }, onSwipeLeft);
     gestures.on({ hand: Hand.right, sign: Sign.swipeRight }, onSwipeRight);
@@ -118,6 +120,16 @@ const CommandMode: FC<CommandModeProps> = ({ onShowLayoutMode }) => {
 
   return (
     <>
+      <Popup
+        show={showPopup}
+        text="Do you want to close the current app?"
+        onCancel={() => setShowPopup(false)}
+        onConfirm={() => {
+          // Close current application
+          setShowPopup(false);
+          appDispatch({ type: AppActionType.close });
+        }}
+      />
       <div className="command-mode">
         <div className="command-mode__header">
           <GestureIndicator

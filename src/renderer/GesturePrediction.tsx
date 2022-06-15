@@ -13,6 +13,7 @@ export enum Sign {
   swipeLeft = 'swipe left',
   swipeRight = 'swipe right',
   swipeDown = 'swipe down',
+  zero = 'zero',
   one = 'one',
   two = 'two',
   three = 'three',
@@ -51,6 +52,7 @@ export type GesturePredictionType = {
 const KEYBOARD_MAP: { [keyCode in string]: Gesture } = {
   a: { hand: Hand.left, sign: Sign.palm },
   d: { hand: Hand.right, sign: Sign.palm },
+  0: { hand: Hand.right, sign: Sign.zero },
   1: { hand: Hand.right, sign: Sign.one },
   2: { hand: Hand.right, sign: Sign.two },
   3: { hand: Hand.right, sign: Sign.three },

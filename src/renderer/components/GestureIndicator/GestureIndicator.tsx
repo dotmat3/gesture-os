@@ -1,5 +1,7 @@
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { FC, HTMLAttributes, useEffect, useState } from 'react';
+
+import classNames from 'classnames';
+
 import {
   Gesture,
   GestureCallback,
@@ -8,7 +10,7 @@ import {
   useGestures,
 } from 'renderer/GesturePrediction';
 
-import classNames from 'classnames';
+import EmojiZero from '../../../../assets/emoji-zero.svg';
 import EmojiOne from '../../../../assets/emoji-one.svg';
 import EmojiTwo from '../../../../assets/emoji-two.svg';
 import EmojiThree from '../../../../assets/emoji-three.svg';
@@ -46,6 +48,8 @@ const getGestureIcon = (hand: Hand, sign: Sign): string => {
       return SwipeLeft;
     case Sign.swipeRight:
       return SwipeRight;
+    case Sign.zero:
+      return EmojiZero;
     case Sign.one:
       return EmojiOne;
     case Sign.two:
