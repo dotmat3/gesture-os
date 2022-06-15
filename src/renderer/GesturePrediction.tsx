@@ -4,6 +4,7 @@ import { WindowQueue } from './utils';
 export enum Hand {
   left = 'left',
   right = 'right',
+  any = 'any',
 }
 
 export enum Sign {
@@ -17,6 +18,7 @@ export enum Sign {
   three = 'three',
   four = 'four',
   none = 'none',
+  any = 'any',
 }
 
 export type Gesture = { hand: Hand; sign: Sign };
@@ -81,18 +83,22 @@ class GestureManager {
     [Hand.right]: { label: Sign.none, confidence: 100 },
   };
 
+  emulateGestureInterval: NodeJS.Timer | null = null;
+
   addGesture(gesture: Gesture) {
     const index = gestureToString(gesture);
     if (index in this.gestureFrequency) this.gestureFrequency[index] += 1;
     else this.gestureFrequency[index] = 1;
 
-    if (this.gestureWindow[gesture.hand].isFull()) {
-      const head = this.gestureWindow[gesture.hand].getHead();
-      const headIndex = gestureToString(head);
-      this.gestureFrequency[headIndex] -= 1;
-    }
+    if (gesture.hand !== Hand.any) {
+      if (this.gestureWindow[gesture.hand].isFull()) {
+        const head = this.gestureWindow[gesture.hand].getHead();
+        const headIndex = gestureToString(head);
+        this.gestureFrequency[headIndex] -= 1;
+      }
 
-    this.gestureWindow[gesture.hand].enqueue(gesture);
+      this.gestureWindow[gesture.hand].enqueue(gesture);
+    }
   }
 
   processGesture = (prediction: GesturePredictionType) => {
@@ -107,12 +113,20 @@ class GestureManager {
     const rightLabel = gestureToString(rightGesture);
 
     const leftCallbacks = this.gesturesMap[leftLabel];
-    if (leftCallbacks)
-      leftCallbacks.forEach((callback) => callback(leftGesture));
+    if (leftCallbacks && leftCallbacks.length !== 0)
+      leftCallbacks[leftCallbacks.length - 1](leftGesture);
 
     const rightCallbacks = this.gesturesMap[rightLabel];
-    if (rightCallbacks)
-      rightCallbacks.forEach((callback) => callback(rightGesture));
+    if (rightCallbacks && rightCallbacks.length !== 0)
+      rightCallbacks[rightCallbacks.length - 1](rightGesture);
+
+    const anyString = gestureToString({ sign: Sign.any, hand: Hand.any });
+
+    const anyCallbacks = this.gesturesMap[anyString];
+    anyCallbacks?.forEach((cb) => {
+      cb(leftGesture);
+      cb(rightGesture);
+    });
   };
 
   register = () => {
@@ -128,11 +142,23 @@ class GestureManager {
       const code = event.key;
       const gesture = KEYBOARD_MAP[code];
 
-      if (gesture) {
+      if (gesture && gesture.hand !== Hand.any) {
         this.keyboardGestures[gesture.hand].label = gesture.sign;
-        this.processGesture(this.keyboardGestures);
       }
     };
+
+    window.onkeyup = (event) => {
+      const code = event.key;
+      const gesture = KEYBOARD_MAP[code];
+
+      if (gesture && gesture.hand !== Hand.any) {
+        this.keyboardGestures[gesture.hand].label = Sign.none;
+      }
+    };
+
+    this.emulateGestureInterval = setInterval(() => {
+      this.processGesture(this.keyboardGestures);
+    }, 1000);
   };
 
   unregister = () => {
@@ -143,6 +169,8 @@ class GestureManager {
       'gesture-prediction',
       this.processGesture as (prediction: unknown) => void
     );
+
+    if (this.emulateGestureInterval) clearInterval(this.emulateGestureInterval);
   };
 
   on = (gesture: Gesture, callback: GestureCallback) => {
@@ -163,16 +191,11 @@ class GestureManager {
   };
 
   onAny = (callback: GestureCallback) => {
-    Object.values(Hand).forEach((hand) =>
-      Object.values(Sign).forEach((sign) => this.on({ hand, sign }, callback))
-    );
-    return callback;
+    return this.on({ sign: Sign.any, hand: Hand.any }, callback);
   };
 
   offAny = (callback: GestureCallback) => {
-    Object.values(Hand).forEach((hand) =>
-      Object.values(Sign).forEach((sign) => this.off({ hand, sign }, callback))
-    );
+    this.off({ sign: Sign.any, hand: Hand.any }, callback);
   };
 
   onCount = (
