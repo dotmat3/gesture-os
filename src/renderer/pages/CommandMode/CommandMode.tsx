@@ -143,7 +143,7 @@ const CommandMode: FC<CommandModeProps> = ({ onShowLayoutMode }) => {
               className="command-mode__swipe-up"
               hand={Hand.right}
               sign={Sign.swipeUp}
-              text="Swipe up to change app layout"
+              text="Change windows layout"
               hideIndication
               swap
             />
@@ -159,6 +159,30 @@ const CommandMode: FC<CommandModeProps> = ({ onShowLayoutMode }) => {
         <div className="command-mode__content">
           {voiceActive && <VoiceResult speechText={speechText} />}
           {!voiceActive && <AppLauncher />}
+        </div>
+        <div className="command-mode__footer">
+          <GestureIndicator
+            hand={Hand.right}
+            sign={Sign.swipeLeft}
+            text="Change app left"
+            hideIndication
+            horizontal
+          />
+          <GestureIndicator
+            hand={Hand.right}
+            sign={Sign.swipeDown}
+            text="Close app"
+            hideIndication
+            swap
+          />
+          <GestureIndicator
+            hand={Hand.right}
+            sign={Sign.swipeRight}
+            text="Change app right"
+            horizontal
+            hideIndication
+            swap
+          />
         </div>
       </div>
     </>

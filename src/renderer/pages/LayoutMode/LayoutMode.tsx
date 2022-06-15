@@ -239,6 +239,7 @@ const LayoutMode: FC<LayoutModeProps> = ({ onClose }) => {
         sign={Sign.swipeUp}
         text="Change layout"
         horizontal
+        hideIndication
       />
       <LayoutModePreview onClose={onClose} />
       <div className="layout-mode__apps">
@@ -259,18 +260,21 @@ const LayoutMode: FC<LayoutModeProps> = ({ onClose }) => {
           sign={Sign.swipeLeft}
           text="Change configuration"
           horizontal
+          hideIndication
         />
         <GestureIndicator
           hand={Hand.right}
           sign={Sign.swipeDown}
           text="Go Back"
           horizontal
+          hideIndication
         />
         <GestureIndicator
           hand={Hand.right}
           sign={Sign.swipeRight}
           text="Change configuration"
           horizontal
+          hideIndication
           swap
         />
       </div>
