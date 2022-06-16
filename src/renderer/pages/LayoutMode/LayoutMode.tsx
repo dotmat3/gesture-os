@@ -76,10 +76,9 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
 
   useEffect(() => {
     const onSwipeUp = () => applyLayout();
-    gestures.on({ hand: Hand.right, sign: Sign.swipeUp }, onSwipeUp);
+    gestures.on({ hand: Hand.right, sign: Sign.swipeUp }, onSwipeUp, 15);
 
-    return () =>
-      gestures.off({ hand: Hand.right, sign: Sign.swipeUp }, onSwipeUp);
+    return () => gestures.off({ hand: Hand.right, sign: Sign.swipeUp }, 15);
   }, [gestures, applyLayout]);
 
   useEffect(() => {
@@ -121,25 +120,25 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
       resetConfiguration();
     };
 
-    gestures.on({ hand: Hand.right, sign: Sign.one }, onOne);
-    gestures.on({ hand: Hand.right, sign: Sign.two }, onTwo);
-    gestures.on({ hand: Hand.right, sign: Sign.three }, onThree);
-    gestures.on({ hand: Hand.right, sign: Sign.four }, onFour);
+    gestures.on({ hand: Hand.right, sign: Sign.one }, onOne, 15);
+    gestures.on({ hand: Hand.right, sign: Sign.two }, onTwo, 15);
+    gestures.on({ hand: Hand.right, sign: Sign.three }, onThree, 15);
+    gestures.on({ hand: Hand.right, sign: Sign.four }, onFour, 15);
 
     const onSwipeLeft = () => setConfiguration((prev) => prev - 1);
     const onSwipeRight = () => setConfiguration((prev) => prev + 1);
 
-    gestures.on({ hand: Hand.right, sign: Sign.swipeLeft }, onSwipeLeft);
-    gestures.on({ hand: Hand.right, sign: Sign.swipeRight }, onSwipeRight);
+    gestures.on({ hand: Hand.right, sign: Sign.swipeLeft }, onSwipeLeft, 15);
+    gestures.on({ hand: Hand.right, sign: Sign.swipeRight }, onSwipeRight, 15);
 
     return () => {
-      gestures.off({ hand: Hand.right, sign: Sign.one }, onOne);
-      gestures.off({ hand: Hand.right, sign: Sign.two }, onTwo);
-      gestures.off({ hand: Hand.right, sign: Sign.three }, onThree);
-      gestures.off({ hand: Hand.right, sign: Sign.four }, onFour);
+      gestures.off({ hand: Hand.right, sign: Sign.one }, 15);
+      gestures.off({ hand: Hand.right, sign: Sign.two }, 15);
+      gestures.off({ hand: Hand.right, sign: Sign.three }, 15);
+      gestures.off({ hand: Hand.right, sign: Sign.four }, 15);
 
-      gestures.off({ hand: Hand.right, sign: Sign.swipeLeft }, onSwipeLeft);
-      gestures.off({ hand: Hand.right, sign: Sign.swipeRight }, onSwipeRight);
+      gestures.off({ hand: Hand.right, sign: Sign.swipeLeft }, 15);
+      gestures.off({ hand: Hand.right, sign: Sign.swipeRight }, 15);
     };
   }, [gestures]);
 
@@ -173,8 +172,12 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
       });
     };
 
-    gestures.on({ hand: Hand.right, sign: Sign.palm }, activateVoiceCommands);
-    gestures.onAny(onAnyHandler);
+    gestures.on(
+      { hand: Hand.right, sign: Sign.palm },
+      activateVoiceCommands,
+      15
+    );
+    const number = gestures.onAny(onAnyHandler);
 
     window.electron.ipcRenderer.on(
       'speech-preview',
@@ -182,11 +185,8 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
     );
 
     return () => {
-      gestures.off(
-        { hand: Hand.right, sign: Sign.palm },
-        activateVoiceCommands
-      );
-      gestures.offAny(onAnyHandler);
+      gestures.off({ hand: Hand.right, sign: Sign.palm }, 15);
+      gestures.offAny(number);
       window.electron.ipcRenderer.off(
         'speech-preview',
         speechListener as (text: unknown) => void
@@ -266,10 +266,9 @@ const LayoutMode: FC<LayoutModeProps> = ({ onClose }) => {
   const [apps] = useApps();
 
   useEffect(() => {
-    gestures.on({ hand: Hand.right, sign: Sign.swipeDown }, onClose);
+    gestures.on({ hand: Hand.right, sign: Sign.swipeDown }, onClose, 15);
 
-    return () =>
-      gestures.off({ hand: Hand.right, sign: Sign.swipeDown }, onClose);
+    return () => gestures.off({ hand: Hand.right, sign: Sign.swipeDown }, 15);
   }, [gestures, onClose]);
 
   return (

@@ -92,9 +92,9 @@ const GestureIndicator: FC<
       if (countRequired) setCurrentProgress((count / countRequired) * 100);
     };
 
-    let countCallback: GestureCallback | null = null;
+    let countPriority: number | null = null;
     if (countRequired) {
-      countCallback = gestures.onCount(
+      countPriority = gestures.onCount(
         gesture,
         countRequired,
         onComplete,
@@ -102,7 +102,7 @@ const GestureIndicator: FC<
       );
     }
     return () => {
-      if (countCallback) gestures.offCount(gesture, countCallback);
+      if (countPriority) gestures.offCount(countPriority);
     };
   }, [gestures, hand, countRequired, sign, onTrigger]);
 

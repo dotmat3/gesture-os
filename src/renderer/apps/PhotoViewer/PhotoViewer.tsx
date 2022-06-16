@@ -24,15 +24,13 @@ const PhotoViewer: FC<AppInstanceProps> = ({ selected }) => {
       setCurrentImageIndex((prev) => mod(prev + 1, IMAGES.length));
 
     const cleanup = () => {
-      if (!selected) {
-        gestures.off({ hand: Hand.right, sign: Sign.swipeLeft }, onLeft);
-        gestures.off({ hand: Hand.right, sign: Sign.swipeRight }, onRight);
-      }
+      gestures.off({ hand: Hand.right, sign: Sign.swipeLeft }, 5);
+      gestures.off({ hand: Hand.right, sign: Sign.swipeRight }, 5);
     };
 
     if (selected) {
-      gestures.on({ hand: Hand.right, sign: Sign.swipeLeft }, onLeft);
-      gestures.on({ hand: Hand.right, sign: Sign.swipeRight }, onRight);
+      gestures.on({ hand: Hand.right, sign: Sign.swipeLeft }, onLeft, 5);
+      gestures.on({ hand: Hand.right, sign: Sign.swipeRight }, onRight, 5);
     }
 
     return cleanup;

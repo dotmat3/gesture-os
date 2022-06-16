@@ -62,9 +62,9 @@ const AppToLaunch: FC<AppToLaunchProps> = ({
       });
     };
 
-    gestures.on({ hand: Hand.right, sign }, onLaunch);
+    gestures.on({ hand: Hand.right, sign }, onLaunch, 10);
 
-    return () => gestures.off({ hand: Hand.right, sign }, onLaunch);
+    return () => gestures.off({ hand: Hand.right, sign }, 10);
   }, [appDispatch, color, gestures, icon, name, sign, component]);
 
   return (

@@ -52,14 +52,12 @@ const CommandMode: FC<CommandModeProps> = ({ onShowLayoutMode }) => {
       setVoiceActive(true);
     };
 
-    gestures.on({ hand: Hand.right, sign: Sign.palm }, listener);
-
-    gestures.onAny(anyListener);
+    gestures.on({ hand: Hand.right, sign: Sign.palm }, listener, 10);
+    const number = gestures.onAny(anyListener);
 
     return () => {
-      gestures.off({ hand: Hand.right, sign: Sign.palm }, listener);
-
-      gestures.offAny(anyListener);
+      gestures.off({ hand: Hand.right, sign: Sign.palm }, 10);
+      gestures.offAny(number);
     };
   }, [gestures]);
 
@@ -94,14 +92,14 @@ const CommandMode: FC<CommandModeProps> = ({ onShowLayoutMode }) => {
     const onSwipeRight = () => appDispatch({ type: AppActionType.selectRight });
     const onSwipeDown = () => setShowPopup(true);
 
-    gestures.on({ hand: Hand.right, sign: Sign.swipeLeft }, onSwipeLeft);
-    gestures.on({ hand: Hand.right, sign: Sign.swipeRight }, onSwipeRight);
-    gestures.on({ hand: Hand.right, sign: Sign.swipeDown }, onSwipeDown);
+    gestures.on({ hand: Hand.right, sign: Sign.swipeLeft }, onSwipeLeft, 10);
+    gestures.on({ hand: Hand.right, sign: Sign.swipeRight }, onSwipeRight, 10);
+    gestures.on({ hand: Hand.right, sign: Sign.swipeDown }, onSwipeDown, 10);
 
     return () => {
-      gestures.off({ hand: Hand.right, sign: Sign.swipeLeft }, onSwipeLeft);
-      gestures.off({ hand: Hand.right, sign: Sign.swipeRight }, onSwipeRight);
-      gestures.off({ hand: Hand.right, sign: Sign.swipeDown }, onSwipeDown);
+      gestures.off({ hand: Hand.right, sign: Sign.swipeLeft }, 10);
+      gestures.off({ hand: Hand.right, sign: Sign.swipeRight }, 10);
+      gestures.off({ hand: Hand.right, sign: Sign.swipeDown }, 10);
     };
   }, [gestures, appDispatch]);
 
@@ -110,10 +108,9 @@ const CommandMode: FC<CommandModeProps> = ({ onShowLayoutMode }) => {
       if (historyLengthRef.current !== 0) onShowLayoutMode();
     };
 
-    gestures.on({ hand: Hand.right, sign: Sign.swipeUp }, onSwipeUp);
+    gestures.on({ hand: Hand.right, sign: Sign.swipeUp }, onSwipeUp, 10);
 
-    return () =>
-      gestures.off({ hand: Hand.right, sign: Sign.swipeUp }, onSwipeUp);
+    return () => gestures.off({ hand: Hand.right, sign: Sign.swipeUp }, 10);
   }, [gestures, appDispatch, onShowLayoutMode]);
 
   const { history } = apps;

@@ -40,9 +40,8 @@ export type GesturePrediction = {
   offAny: (callback: GestureCallback) => void;
 };
 
-export type GesturesMap = Partial<{
-  [gesture in string]: Array<GestureCallback>;
-}>;
+export type PriorityMap = { [priority: number]: GestureCallback };
+export type GesturesMap = Partial<{ [gesture: string]: PriorityMap }>;
 export type HandPrediction = { label: Sign; confidence: number };
 export type GesturePredictionType = {
   left: HandPrediction;
@@ -64,9 +63,8 @@ const KEYBOARD_MAP: { [keyCode in string]: Gesture } = {
   ' ': { hand: Hand.left, sign: Sign.none },
 };
 
-export const gestureToString = (gesture: Gesture) => {
-  return `${gesture.hand}_${gesture.sign}`;
-};
+export const gestureToString = (gesture: Gesture) =>
+  `${gesture.hand}_${gesture.sign}`;
 
 export const GESTURE_WINDOW_SIZE = 5;
 
@@ -87,6 +85,8 @@ class GestureManager {
 
   emulateGestureInterval: NodeJS.Timer | null = null;
 
+  anyPriorityCounter: number = 0;
+
   addGesture(gesture: Gesture) {
     const index = gestureToString(gesture);
     if (index in this.gestureFrequency) this.gestureFrequency[index] += 1;
@@ -103,32 +103,46 @@ class GestureManager {
     }
   }
 
+  getHighestPriorityCallback = (callbacks?: PriorityMap) => {
+    if (callbacks) {
+      const priorities = Object.keys(callbacks).map((v) => parseInt(v, 10));
+
+      if (priorities.length !== 0) return callbacks[Math.max(...priorities)];
+    }
+
+    return null;
+  };
+
   processGesture = (prediction: GesturePredictionType) => {
     const { left, right } = prediction;
+
     const leftGesture = { hand: Hand.left, sign: left.label };
     const rightGesture = { hand: Hand.right, sign: right.label };
 
     this.addGesture(leftGesture);
     this.addGesture(rightGesture);
 
+    // Left gesture
     const leftLabel = gestureToString(leftGesture);
-    const rightLabel = gestureToString(rightGesture);
-
     const leftCallbacks = this.gesturesMap[leftLabel];
-    if (leftCallbacks && leftCallbacks.length !== 0)
-      leftCallbacks[leftCallbacks.length - 1](leftGesture);
+    const leftCallback = this.getHighestPriorityCallback(leftCallbacks);
+    if (leftCallback) leftCallback(leftGesture);
 
+    // Right gesture
+    const rightLabel = gestureToString(rightGesture);
     const rightCallbacks = this.gesturesMap[rightLabel];
-    if (rightCallbacks && rightCallbacks.length !== 0)
-      rightCallbacks[rightCallbacks.length - 1](rightGesture);
+    const rightCallback = this.getHighestPriorityCallback(rightCallbacks);
+    if (rightCallback) rightCallback(rightGesture);
 
+    // Any gesture
     const anyString = gestureToString({ sign: Sign.any, hand: Hand.any });
-
     const anyCallbacks = this.gesturesMap[anyString];
-    anyCallbacks?.forEach((cb) => {
-      cb(leftGesture);
-      cb(rightGesture);
-    });
+    if (anyCallbacks) {
+      Object.values(anyCallbacks).forEach((cb) => {
+        cb(leftGesture);
+        cb(rightGesture);
+      });
+    }
   };
 
   register = () => {
@@ -175,29 +189,42 @@ class GestureManager {
     if (this.emulateGestureInterval) clearInterval(this.emulateGestureInterval);
   };
 
-  on = (gesture: Gesture, callback: GestureCallback) => {
+  on = (gesture: Gesture, callback: GestureCallback, priority: number) => {
     const index = gestureToString(gesture);
 
-    if (index in this.gesturesMap) this.gesturesMap[index]?.push(callback);
-    else this.gesturesMap[index] = [callback];
+    if (index in this.gesturesMap) {
+      const map = this.gesturesMap[index];
+      if (map) {
+        if (priority in map)
+          throw new Error(
+            `Priority ${priority} for gesture ${gesture.hand}-${gesture.sign} already assigned`
+          );
 
-    return callback;
+        map[priority] = callback;
+      }
+    } else this.gesturesMap[index] = { [priority]: callback };
+
+    return priority;
   };
 
-  off = (gesture: Gesture, callback: GestureCallback) => {
+  off = (gesture: Gesture, priority: number) => {
     const index = gestureToString(gesture);
-    if (index in this.gesturesMap)
-      this.gesturesMap[index] = this.gesturesMap[index]?.filter(
-        (fn) => callback !== fn
-      );
+    if (index in this.gesturesMap) {
+      const map = this.gesturesMap[index];
+      if (map && priority in map) delete map[priority];
+    }
   };
 
   onAny = (callback: GestureCallback) => {
-    return this.on({ sign: Sign.any, hand: Hand.any }, callback);
+    const anyGesture = { sign: Sign.any, hand: Hand.any };
+    const priority = this.anyPriorityCounter;
+    this.on(anyGesture, callback, priority);
+    this.anyPriorityCounter += 1;
+    return priority;
   };
 
-  offAny = (callback: GestureCallback) => {
-    this.off({ sign: Sign.any, hand: Hand.any }, callback);
+  offAny = (priority: number) => {
+    this.off({ sign: Sign.any, hand: Hand.any }, priority);
   };
 
   onCount = (
@@ -218,8 +245,7 @@ class GestureManager {
     return this.onAny(countCallback);
   };
 
-  offCount = (gesture: Gesture, callback: GestureCallback) =>
-    this.off(gesture, callback);
+  offCount = (priority: number) => this.offAny(priority);
 }
 
 const instance = new GestureManager();

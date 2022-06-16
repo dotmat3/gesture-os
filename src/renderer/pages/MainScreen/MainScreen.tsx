@@ -151,12 +151,12 @@ const MainScreen = () => {
       }
     };
 
-    gestures.on({ hand: Hand.left, sign: Sign.palm }, onPalm);
-    gestures.onAny(onAny);
+    gestures.on({ hand: Hand.left, sign: Sign.palm }, onPalm, 10);
+    const number = gestures.onAny(onAny);
 
     return () => {
-      gestures.off({ hand: Hand.left, sign: Sign.palm }, onPalm);
-      gestures.offAny(onAny);
+      gestures.off({ hand: Hand.left, sign: Sign.palm }, 10);
+      gestures.offAny(number);
     };
   }, [gestures, showLayoutMode]);
 

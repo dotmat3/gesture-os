@@ -15,12 +15,12 @@ const Popup: FC<PopupProps> = ({ text, onCancel, onConfirm }) => {
   const gestures = useGestures();
 
   useEffect(() => {
-    gestures.on({ hand: Hand.right, sign: Sign.zero }, onCancel);
-    gestures.on({ hand: Hand.right, sign: Sign.palm }, onConfirm);
+    gestures.on({ hand: Hand.right, sign: Sign.zero }, onCancel, 20);
+    gestures.on({ hand: Hand.right, sign: Sign.palm }, onConfirm, 20);
 
     return () => {
-      gestures.off({ hand: Hand.right, sign: Sign.zero }, onCancel);
-      gestures.off({ hand: Hand.right, sign: Sign.palm }, onConfirm);
+      gestures.off({ hand: Hand.right, sign: Sign.zero }, 20);
+      gestures.off({ hand: Hand.right, sign: Sign.palm }, 20);
     };
   });
 
