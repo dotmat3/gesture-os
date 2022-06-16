@@ -78,7 +78,7 @@ const MainScreenWithApp: FC<MainScreenWithAppProps> = ({ time, date }) => {
   }, [apps.layout]);
 
   const renderIfInLayout = useCallback(
-    ({ id, name, icon, color }: AppInstance) => {
+    ({ id, name, icon, color, component }: AppInstance) => {
       if (apps.layout && id in apps.layout.apps)
         return (
           <AppWindow
@@ -87,6 +87,7 @@ const MainScreenWithApp: FC<MainScreenWithAppProps> = ({ time, date }) => {
             name={name}
             icon={icon}
             color={color}
+            component={component}
             selected={id === apps.selected}
           />
         );

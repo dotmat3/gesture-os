@@ -12,9 +12,16 @@
   }
 
   .app-window__header {
+    --height: 40px;
+
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+
     background-color: #666;
-    padding: 10px;
-    font-size: 1.3em;
+    font-size: 1.2em;
+    min-height: var(--height);
+    height: var(--height);
   }
 
   .app-window__content {

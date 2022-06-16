@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { CSSProperties, FC, useMemo } from 'react';
+import { createElement, CSSProperties, FC, useMemo } from 'react';
 
 import { AppInstance, useApps } from 'renderer/AppStore';
 
@@ -9,7 +9,13 @@ export type AppWindowProps = AppInstance & {
   selected: boolean;
 };
 
-const AppWindow: FC<AppWindowProps> = ({ id, name, color, selected }) => {
+const AppWindow: FC<AppWindowProps> = ({
+  id,
+  name,
+  color,
+  selected,
+  component,
+}) => {
   const [{ layout }] = useApps();
 
   const gridArea = useMemo(() => {
@@ -28,7 +34,9 @@ const AppWindow: FC<AppWindowProps> = ({ id, name, color, selected }) => {
       >
         {name}
       </div>
-      <div className="app-window__content" />
+      <div className="app-window__content">
+        {createElement(component, { selected })}
+      </div>
     </div>
   );
 };

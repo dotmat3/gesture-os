@@ -1,5 +1,3 @@
-/* eslint-disable guard-for-in */
-/* eslint-disable no-restricted-syntax */
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -47,14 +45,13 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
     console.debug('Apply layout', assignedApps);
 
     const layoutApps: LayoutApps = {};
-    for (const letter of Object.keys(assignedApps)) {
+    Object.keys(assignedApps).forEach((letter) => {
       const index = letter.charCodeAt(0) - 'A'.charCodeAt(0);
-      // eslint-disable-next-line no-continue
-      if (index + 1 > blocks) continue;
+      if (index + 1 > blocks) return;
 
       const appId = assignedApps[letter].id;
       layoutApps[appId] = index;
-    }
+    });
 
     appDispatch({
       type: AppActionType.changeLayout,
@@ -89,13 +86,12 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
     if (!layout) return;
 
     const newAssignedApps: { [letter in string]: AppInstance } = {};
-    const appIds = Object.keys(layout.apps);
-    for (const appId of appIds) {
+    Object.keys(layout.apps).forEach((appId) => {
       const index = layout.apps[appId];
       const letter = String.fromCharCode(index + 'A'.charCodeAt(0));
       const app = apps.history.find((element) => element.id === appId);
       if (app) newAssignedApps[letter] = app;
-    }
+    });
 
     setAssignedApps(newAssignedApps);
     setBlocks(layout.blocks);
@@ -287,7 +283,7 @@ const LayoutMode: FC<LayoutModeProps> = ({ onClose }) => {
       />
       <LayoutModePreview onClose={onClose} />
       <div className="layout-mode__apps">
-        {apps.history.map(({ id, name, color, icon }, index) => (
+        {apps.history.map(({ id, name, color, icon, component }, index) => (
           <LayoutModeApp
             index={index + 1}
             key={id}
@@ -295,6 +291,7 @@ const LayoutMode: FC<LayoutModeProps> = ({ onClose }) => {
             name={name}
             color={color}
             icon={icon}
+            component={component}
           />
         ))}
       </div>

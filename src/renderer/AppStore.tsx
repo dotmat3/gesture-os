@@ -1,4 +1,5 @@
 import {
+  ComponentType,
   createContext,
   FC,
   PropsWithChildren,
@@ -8,11 +9,16 @@ import {
 } from 'react';
 import { mod } from './utils';
 
+export type AppInstanceProps = {
+  selected: boolean;
+};
+
 export type AppInstance = {
   name: string;
   color: string;
   id: string;
   icon: string;
+  component: ComponentType<AppInstanceProps>;
 };
 
 export enum AppActionType {

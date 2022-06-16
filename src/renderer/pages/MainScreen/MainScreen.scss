@@ -28,10 +28,11 @@
   .main-screen__app-content {
     width: 100%;
     flex-grow: 1;
+    max-height: calc(100% - 80px);
 
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 50% 50%;
+    grid-template-rows: 50% 50%;
     grid-template-areas:
       'app1 app1'
       'app1 app1';
