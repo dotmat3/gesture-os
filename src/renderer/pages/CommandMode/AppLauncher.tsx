@@ -1,6 +1,7 @@
 import { ComponentType, FC, useEffect } from 'react';
 
 import PhotoViewer from 'renderer/apps/PhotoViewer';
+import VideoPlayer from 'renderer/apps/VideoPlayer';
 import GestureIndicator from 'renderer/components/GestureIndicator';
 import { Hand, Sign, useGestures } from 'renderer/GesturePrediction';
 import { AppActionType, AppInstanceProps, useApps } from 'renderer/AppStore';
@@ -25,10 +26,10 @@ const defaultAppsToLaunch: Array<AppTemplate> = [
     component: PhotoViewer,
   },
   {
-    name: 'Browser',
+    name: 'Video',
     icon: Icon,
     color: '#DE482B',
-    component: PhotoViewer,
+    component: VideoPlayer,
   },
   {
     name: 'Settings',
