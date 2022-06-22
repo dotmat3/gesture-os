@@ -151,17 +151,36 @@ class GestureManager {
     // eslint-disable-next-line no-console
     console.debug('GestureManager registered');
 
-    this.clearIPC = window.electron.ipcRenderer.on(
-      'gesture-prediction',
-      this.processGesture as (prediction: unknown) => void
-    );
+    this.startReceivingGestures();
 
     window.addEventListener('keydown', (event) => {
       const code = event.key;
       if (code === 'k')
-        if (this.emulateGestureInterval) this.stopKeyboardGestures();
-        else this.startKeyboardGestures();
+        if (this.emulateGestureInterval) {
+          this.stopKeyboardGestures();
+          this.startReceivingGestures();
+        } else {
+          this.stopReceivingGestures();
+          this.startKeyboardGestures();
+        }
     });
+  };
+
+  startReceivingGestures = () => {
+    // eslint-disable-next-line no-console
+    console.debug('Started receiving gestures');
+
+    this.clearIPC = window.electron.ipcRenderer.on(
+      'gesture-prediction',
+      this.processGesture as (prediction: unknown) => void
+    );
+  };
+
+  stopReceivingGestures = () => {
+    // eslint-disable-next-line no-console
+    console.debug('Stopped receiving gestures');
+
+    if (this.clearIPC) this.clearIPC();
   };
 
   startKeyboardGestures = () => {
@@ -172,9 +191,8 @@ class GestureManager {
       const code = event.key;
       const gesture = KEYBOARD_MAP[code];
 
-      if (gesture && gesture.hand !== Hand.any) {
+      if (gesture && gesture.hand !== Hand.any)
         this.keyboardGestures[gesture.hand].label = gesture.sign;
-      }
     });
 
     window.addEventListener('keyup', (event) => {
@@ -205,7 +223,7 @@ class GestureManager {
     // eslint-disable-next-line no-console
     console.debug('GestureManager unregistered');
 
-    if (this.clearIPC) this.clearIPC();
+    this.stopReceivingGestures();
 
     this.stopKeyboardGestures();
   };
