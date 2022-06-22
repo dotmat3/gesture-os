@@ -20,6 +20,7 @@ const TextViewer: FC<AppInstanceProps> = ({ args }) => {
       window.electron.ipcRenderer
         .invoke('read-file', path)
         .then((res) => setContent(res as string))
+        // eslint-disable-next-line no-console
         .catch((err) => console.error(err));
     }
   }, [path]);
@@ -27,11 +28,16 @@ const TextViewer: FC<AppInstanceProps> = ({ args }) => {
   return (
     <div className="text-viewer">
       {path && (
-        <p>
+        <p className="text-viewer__path">
           <span>Path:</span> ~{path.replace('.', '🏠')}
         </p>
       )}
-      <p className="text-viewer__content">{content}</p>
+      <div className="text-viewer__content">
+        {content.split('\n').map((row, index) => (
+          // eslint-disable-next-line react/no-array-index-key
+          <p key={index}>{row}</p>
+        ))}
+      </div>
     </div>
   );
 };

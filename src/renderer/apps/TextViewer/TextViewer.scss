@@ -12,11 +12,17 @@
   padding: 40px;
   font-size: 1.7em;
 
-  span {
-    opacity: 0.8;
+  .text-viewer__path {
+    flex-shrink: 0;
+
+    span {
+      opacity: 0.8;
+    }
   }
 
   .text-viewer__content {
     padding: 20px 10px;
+    width: 100%;
+    overflow: auto;
   }
 }

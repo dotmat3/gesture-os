@@ -72,6 +72,6 @@ export const defaultAppsToLaunch: Array<AppTemplate> = [
   }),
   ExplorerApp({ path: '.' }),
   TextApp({
-    text: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. In dolore quaerat, amet maiores ex autem hic a, quam molestias voluptates doloribus! Modi eos quae cum accusamus dolorem inventore consectetur deleniti.',
+    text: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.\nIn dolore quaerat, amet maiores ex autem hic a, quam molestias voluptates doloribus!\nModi eos quae cum accusamus dolorem inventore consectetur deleniti.',
   }),
 ];
