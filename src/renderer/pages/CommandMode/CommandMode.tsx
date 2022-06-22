@@ -66,24 +66,18 @@ const CommandMode: FC<CommandModeProps> = ({ onShowLayoutMode }) => {
       setSpeechText(text);
     };
 
-    window.electron.ipcRenderer.on(
+    const clearSpeechPreview = window.electron.ipcRenderer.on(
       'speech-preview',
       speechListener as (text: unknown) => void
     );
-    window.electron.ipcRenderer.on(
+    const clearSpeechRecognized = window.electron.ipcRenderer.on(
       'speech-recognized',
       speechListener as (text: unknown) => void
     );
 
     return () => {
-      window.electron.ipcRenderer.off(
-        'speech-preview',
-        speechListener as (text: unknown) => void
-      );
-      window.electron.ipcRenderer.off(
-        'speech-recognized',
-        speechListener as (text: unknown) => void
-      );
+      if (clearSpeechPreview) clearSpeechPreview();
+      if (clearSpeechRecognized) clearSpeechRecognized();
     };
   }, []);
 

@@ -6,12 +6,17 @@ export type Channels =
   | 'cancel-speech-recognition'
   | 'stop-speech-recognition'
   | 'speech-preview'
-  | 'speech-recognized';
+  | 'speech-recognized'
+  | 'list-path'
+  | 'read-file';
 
 contextBridge.exposeInMainWorld('electron', {
   ipcRenderer: {
-    sendMessage(channel: Channels, args: unknown[]) {
+    sendMessage(channel: Channels, ...args: unknown[]) {
       ipcRenderer.send(channel, args);
+    },
+    invoke(channel: Channels, ...args: unknown[]) {
+      return ipcRenderer.invoke(channel, args);
     },
     on(channel: Channels, func: (...args: unknown[]) => void) {
       const subscription = (_event: IpcRendererEvent, ...args: unknown[]) =>
@@ -22,9 +27,6 @@ contextBridge.exposeInMainWorld('electron', {
     },
     once(channel: Channels, func: (...args: unknown[]) => void) {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));
-    },
-    off(channel: Channels, func: (...args: unknown[]) => void) {
-      ipcRenderer.off(channel, func);
     },
   },
 });

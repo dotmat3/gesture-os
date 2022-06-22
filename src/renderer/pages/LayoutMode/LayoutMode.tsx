@@ -179,7 +179,7 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
     );
     const number = gestures.onAny(onAnyHandler);
 
-    window.electron.ipcRenderer.on(
+    const clearSpeechPreview = window.electron.ipcRenderer.on(
       'speech-preview',
       speechListener as (text: unknown) => void
     );
@@ -187,10 +187,7 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
     return () => {
       gestures.off({ hand: Hand.right, sign: Sign.palm }, 15);
       gestures.offAny(number);
-      window.electron.ipcRenderer.off(
-        'speech-preview',
-        speechListener as (text: unknown) => void
-      );
+      if (clearSpeechPreview) clearSpeechPreview();
     };
   }, [assignApp, gestures]);
 
@@ -282,17 +279,20 @@ const LayoutMode: FC<LayoutModeProps> = ({ onClose }) => {
       />
       <LayoutModePreview onClose={onClose} />
       <div className="layout-mode__apps">
-        {apps.history.map(({ id, name, color, icon, component }, index) => (
-          <LayoutModeApp
-            index={index + 1}
-            key={id}
-            id={id}
-            name={name}
-            color={color}
-            icon={icon}
-            component={component}
-          />
-        ))}
+        {apps.history.map(
+          ({ id, name, color, icon, component, args }, index) => (
+            <LayoutModeApp
+              index={index + 1}
+              key={id}
+              id={id}
+              name={name}
+              color={color}
+              icon={icon}
+              component={component}
+              args={args}
+            />
+          )
+        )}
       </div>
       <div className="layout-mode__bottom">
         <GestureIndicator

@@ -15,6 +15,7 @@ const AppWindow: FC<AppWindowProps> = ({
   color,
   selected,
   component,
+  args,
 }) => {
   const [{ layout }] = useApps();
 
@@ -35,7 +36,7 @@ const AppWindow: FC<AppWindowProps> = ({
         {name}
       </div>
       <div className="app-window__content">
-        {createElement(component, { selected })}
+        {createElement(component, { selected, args })}
       </div>
     </div>
   );

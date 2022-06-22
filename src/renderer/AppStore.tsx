@@ -11,6 +11,7 @@ import { mod } from './utils';
 
 export type AppInstanceProps = {
   selected: boolean;
+  args: { [name: string]: unknown };
 };
 
 export type AppInstance = {
@@ -19,6 +20,7 @@ export type AppInstance = {
   id: string;
   icon: string;
   component: ComponentType<AppInstanceProps>;
+  args: { [name: string]: unknown };
 };
 
 export enum AppActionType {

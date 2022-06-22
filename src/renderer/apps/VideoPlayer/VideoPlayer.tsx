@@ -6,10 +6,11 @@ import { AppInstanceProps } from 'renderer/AppStore';
 
 import './VideoPlayer.scss';
 
-const VIDEO_URL =
-  'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+export type VideoPlayerArgs = { video: string };
 
-const VideoPlayer: FC<AppInstanceProps> = ({ selected }) => {
+const VideoPlayer: FC<AppInstanceProps> = ({ selected, args }) => {
+  const { video } = args as VideoPlayerArgs;
+
   const gestures = useGestures();
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -50,7 +51,7 @@ const VideoPlayer: FC<AppInstanceProps> = ({ selected }) => {
   return (
     <div className="video-player">
       <div className="video-player__video">
-        <video src={VIDEO_URL} ref={videoRef} controls>
+        <video src={video} ref={videoRef} controls>
           <track kind="captions" />
         </video>
       </div>

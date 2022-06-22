@@ -9,7 +9,14 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, globalShortcut, ipcMain } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  shell,
+  globalShortcut,
+  ipcMain,
+  protocol,
+} from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { ChildProcess, spawn } from 'child_process';
@@ -18,7 +25,18 @@ import { Server } from 'socket.io';
 import express from 'express';
 import http from 'http';
 
+import fs from 'fs';
 import { resolveHtmlPath } from './util';
+
+export enum HierarchyNodeType {
+  text = 'text',
+  image = 'image',
+  video = 'video',
+  folder = 'folder',
+  file = 'file',
+}
+
+export type HierarchyNode = { name: string; type: HierarchyNodeType };
 
 export default class AppUpdater {
   constructor() {
@@ -27,6 +45,47 @@ export default class AppUpdater {
     autoUpdater.checkForUpdatesAndNotify();
   }
 }
+
+const ROOT = path.join(process.cwd(), 'GestureOSRoot');
+
+const getType = (directory: string, filename: string) => {
+  const stats = fs.lstatSync(path.join(directory, filename));
+  const isDir = stats.isDirectory();
+
+  if (isDir) return HierarchyNodeType.folder;
+
+  switch (path.extname(filename)) {
+    case '.mp4':
+      return HierarchyNodeType.video;
+    case '.png':
+      return HierarchyNodeType.image;
+    case '.txt':
+      return HierarchyNodeType.text;
+    default:
+      return HierarchyNodeType.file;
+  }
+};
+
+ipcMain.handle('list-path', (_event, args) => {
+  const [relativePath] = args;
+  const completePath = path.join(ROOT, relativePath);
+  const result = fs.readdirSync(completePath);
+  const files: Array<HierarchyNode> = [];
+
+  result.forEach((filename) => {
+    const type = getType(completePath, filename);
+    files.push({ name: filename, type });
+  });
+
+  return files;
+});
+
+ipcMain.handle('read-file', (_event, args) => {
+  const [relativePath] = args;
+  const completePath = path.join(ROOT, relativePath);
+  console.log('Reading file', completePath);
+  return fs.readFileSync(completePath, { encoding: 'utf-8' });
+});
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -177,6 +236,12 @@ function startSocketIOServer() {
 app
   .whenReady()
   .then(() => {
+    protocol.registerFileProtocol('atom', (request, callback) => {
+      const url = request.url.substring(7).replace('$', ROOT);
+      // eslint-disable-next-line promise/no-callback-in-promise
+      callback({ path: url });
+    });
+
     const socketIOServer = startSocketIOServer();
     socketIOServer.on('listening', () => {
       console.log('SocketIO server started');

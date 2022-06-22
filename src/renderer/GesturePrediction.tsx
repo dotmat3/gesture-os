@@ -85,6 +85,8 @@ class GestureManager {
 
   emulateGestureInterval: NodeJS.Timer | null = null;
 
+  clearIPC: VoidFunction | undefined;
+
   anyPriorityCounter: number = 0;
 
   addGesture(gesture: Gesture) {
@@ -149,7 +151,7 @@ class GestureManager {
     // eslint-disable-next-line no-console
     console.debug('GestureManager registered');
 
-    window.electron.ipcRenderer.on(
+    this.clearIPC = window.electron.ipcRenderer.on(
       'gesture-prediction',
       this.processGesture as (prediction: unknown) => void
     );
@@ -181,10 +183,7 @@ class GestureManager {
     // eslint-disable-next-line no-console
     console.debug('GestureManager unregistered');
 
-    window.electron.ipcRenderer.off(
-      'gesture-prediction',
-      this.processGesture as (prediction: unknown) => void
-    );
+    if (this.clearIPC) this.clearIPC();
 
     if (this.emulateGestureInterval) clearInterval(this.emulateGestureInterval);
   };

@@ -1,49 +1,13 @@
-import { ComponentType, FC, useEffect } from 'react';
+import { FC, useEffect } from 'react';
 
-import PhotoViewer from 'renderer/apps/PhotoViewer';
-import VideoPlayer from 'renderer/apps/VideoPlayer';
 import GestureIndicator from 'renderer/components/GestureIndicator';
 import { Hand, Sign, useGestures } from 'renderer/GesturePrediction';
-import { AppActionType, AppInstanceProps, useApps } from 'renderer/AppStore';
+import { AppActionType, useApps } from 'renderer/AppStore';
+import { AppTemplate, defaultAppsToLaunch } from 'renderer/config';
 
 import { v4 as uuidv4 } from 'uuid';
 
-import Icon from '../../../../assets/icon.svg';
-
-export type AppTemplate = {
-  name: string;
-  icon: string;
-  color: string;
-  component: ComponentType<AppInstanceProps>;
-};
 export type AppToLaunchProps = AppTemplate & { sign: Sign };
-
-const defaultAppsToLaunch: Array<AppTemplate> = [
-  {
-    name: 'Photo',
-    icon: Icon,
-    color: '#81C046',
-    component: PhotoViewer,
-  },
-  {
-    name: 'Video',
-    icon: Icon,
-    color: '#DE482B',
-    component: VideoPlayer,
-  },
-  {
-    name: 'Settings',
-    icon: Icon,
-    color: '#3B77BC',
-    component: PhotoViewer,
-  },
-  {
-    name: 'Calculator',
-    icon: Icon,
-    color: '#FCCF03',
-    component: PhotoViewer,
-  },
-];
 
 const AppToLaunch: FC<AppToLaunchProps> = ({
   sign,
@@ -51,6 +15,7 @@ const AppToLaunch: FC<AppToLaunchProps> = ({
   color,
   icon,
   component,
+  args,
 }) => {
   const gestures = useGestures();
   const [, appDispatch] = useApps();
@@ -59,14 +24,14 @@ const AppToLaunch: FC<AppToLaunchProps> = ({
     const onLaunch = () => {
       appDispatch({
         type: AppActionType.open,
-        payload: { id: uuidv4(), name, icon, color, component },
+        payload: { id: uuidv4(), name, icon, color, component, args },
       });
     };
 
     gestures.on({ hand: Hand.right, sign }, onLaunch, 10);
 
     return () => gestures.off({ hand: Hand.right, sign }, 10);
-  }, [appDispatch, color, gestures, icon, name, sign, component]);
+  }, [appDispatch, color, gestures, icon, name, sign, component, args]);
 
   return (
     <div className="application">
@@ -92,6 +57,7 @@ const AppLauncher = () => {
           color={app.color}
           icon={app.icon}
           component={app.component}
+          args={app.args}
         />
       ))}
     </div>
