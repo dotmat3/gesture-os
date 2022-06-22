@@ -6,7 +6,10 @@ import VideoPlayer from 'renderer/apps/VideoPlayer';
 import FileExplorer from 'renderer/apps/FileExplorer';
 import TextViewer from 'renderer/apps/TextViewer';
 
-import Icon from '../../assets/icon.svg';
+import PhotoIcon from '../../assets/photo-viewer-icon.svg';
+import VideoIcon from '../../assets/video-player-icon.svg';
+import FileIcon from '../../assets/file-explorer-icon.svg';
+import TextIcon from '../../assets/text-viewer-icon.svg';
 
 import { AppInstanceProps } from './AppStore';
 import { PhotoViewerArgs } from './apps/PhotoViewer/PhotoViewer';
@@ -25,7 +28,7 @@ export type AppTemplate = {
 
 export const PhotoApp = (args: PhotoViewerArgs): AppTemplate => ({
   name: 'Photo',
-  icon: Icon,
+  icon: PhotoIcon,
   color: '#81C046',
   component: PhotoViewer,
   args,
@@ -33,7 +36,7 @@ export const PhotoApp = (args: PhotoViewerArgs): AppTemplate => ({
 
 export const VideoApp = (args: VideoPlayerArgs): AppTemplate => ({
   name: 'Video',
-  icon: Icon,
+  icon: VideoIcon,
   color: '#DE482B',
   component: VideoPlayer,
   args,
@@ -41,7 +44,7 @@ export const VideoApp = (args: VideoPlayerArgs): AppTemplate => ({
 
 export const ExplorerApp = (args: FileExplorerArgs): AppTemplate => ({
   name: 'Explorer',
-  icon: Icon,
+  icon: FileIcon,
   color: '#3B77BC',
   component: FileExplorer,
   args,
@@ -49,7 +52,7 @@ export const ExplorerApp = (args: FileExplorerArgs): AppTemplate => ({
 
 export const TextApp = (args: TextViewerArgs): AppTemplate => ({
   name: 'Text',
-  icon: Icon,
+  icon: TextIcon,
   color: '#FCCF03',
   component: TextViewer,
   args,

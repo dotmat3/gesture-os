@@ -12,6 +12,7 @@ export type AppWindowProps = AppInstance & {
 const AppWindow: FC<AppWindowProps> = ({
   id,
   name,
+  icon,
   color,
   selected,
   component,
@@ -33,6 +34,7 @@ const AppWindow: FC<AppWindowProps> = ({
         className="app-window__header"
         style={{ '--color': color } as CSSProperties}
       >
+        <img src={icon} alt="icon" />
         {name}
       </div>
       <div className="app-window__content">
