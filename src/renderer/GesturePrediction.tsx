@@ -156,27 +156,49 @@ class GestureManager {
       this.processGesture as (prediction: unknown) => void
     );
 
-    window.onkeydown = (event) => {
+    window.addEventListener('keydown', (event) => {
+      const code = event.key;
+      if (code === 'k')
+        if (this.emulateGestureInterval) this.stopKeyboardGestures();
+        else this.startKeyboardGestures();
+    });
+  };
+
+  startKeyboardGestures = () => {
+    // eslint-disable-next-line no-console
+    console.debug('Started keyboard gesture simulation');
+
+    window.addEventListener('keydown', (event) => {
       const code = event.key;
       const gesture = KEYBOARD_MAP[code];
 
       if (gesture && gesture.hand !== Hand.any) {
         this.keyboardGestures[gesture.hand].label = gesture.sign;
       }
-    };
+    });
 
-    window.onkeyup = (event) => {
+    window.addEventListener('keyup', (event) => {
       const code = event.key;
       const gesture = KEYBOARD_MAP[code];
 
       if (gesture && gesture.hand !== Hand.any) {
         this.keyboardGestures[gesture.hand].label = Sign.none;
       }
-    };
+    });
 
     this.emulateGestureInterval = setInterval(() => {
       this.processGesture(this.keyboardGestures);
     }, 1000);
+  };
+
+  stopKeyboardGestures = () => {
+    // eslint-disable-next-line no-console
+    console.debug('Stopped keyboard gesture simulation');
+
+    if (this.emulateGestureInterval) {
+      clearInterval(this.emulateGestureInterval);
+      this.emulateGestureInterval = null;
+    }
   };
 
   unregister = () => {
@@ -185,7 +207,7 @@ class GestureManager {
 
     if (this.clearIPC) this.clearIPC();
 
-    if (this.emulateGestureInterval) clearInterval(this.emulateGestureInterval);
+    this.stopKeyboardGestures();
   };
 
   on = (gesture: Gesture, callback: GestureCallback, priority: number) => {
