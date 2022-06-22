@@ -151,30 +151,32 @@ const CommandMode: FC<CommandModeProps> = ({ onShowLayoutMode }) => {
           {voiceActive && <VoiceResult speechText={speechText} />}
           {!voiceActive && <AppLauncher />}
         </div>
-        <div className="command-mode__footer">
-          <GestureIndicator
-            hand={Hand.right}
-            sign={Sign.swipeLeft}
-            text="Change app left"
-            hideIndication
-            horizontal
-          />
-          <GestureIndicator
-            hand={Hand.right}
-            sign={Sign.swipeDown}
-            text="Close app"
-            hideIndication
-            swap
-          />
-          <GestureIndicator
-            hand={Hand.right}
-            sign={Sign.swipeRight}
-            text="Change app right"
-            horizontal
-            hideIndication
-            swap
-          />
-        </div>
+        {history.length !== 0 && (
+          <div className="command-mode__footer">
+            <GestureIndicator
+              hand={Hand.right}
+              sign={Sign.swipeLeft}
+              text="Change app left"
+              hideIndication
+              horizontal
+            />
+            <GestureIndicator
+              hand={Hand.right}
+              sign={Sign.swipeDown}
+              text="Close app"
+              hideIndication
+              swap
+            />
+            <GestureIndicator
+              hand={Hand.right}
+              sign={Sign.swipeRight}
+              text="Change app right"
+              horizontal
+              hideIndication
+              swap
+            />
+          </div>
+        )}
       </div>
     </>
   );
