@@ -39,7 +39,15 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
   const { layout } = apps;
 
   const applyLayout = useCallback(() => {
-    if (Object.keys(assignedApps).length < blocks) return;
+    // Check if all the letters required for the layout are assigned
+    let stop = false;
+
+    for (let index = 0; index < blocks; index += 1) {
+      const letter = String.fromCharCode(index + 'A'.charCodeAt(0));
+      stop = !(letter in assignedApps);
+    }
+
+    if (stop) return;
 
     // eslint-disable-next-line no-console
     console.debug('Apply layout', assignedApps);
