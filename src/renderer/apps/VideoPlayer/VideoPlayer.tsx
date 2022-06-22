@@ -1,10 +1,11 @@
-import { FC, useEffect, useRef } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 
 import GestureIndicator from 'renderer/components/GestureIndicator';
 import { Hand, Sign, useGestures } from 'renderer/GesturePrediction';
 import { AppInstanceProps } from 'renderer/AppStore';
 
 import './VideoPlayer.scss';
+import classNames from 'classnames';
 
 export type VideoPlayerArgs = { video: string };
 
@@ -13,15 +14,19 @@ const VideoPlayer: FC<AppInstanceProps> = ({ selected, args }) => {
 
   const gestures = useGestures();
 
+  const [fullscreen, setFullscreen] = useState(false);
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
-    const onPlay = () => videoRef.current?.play();
-    const onPause = () => videoRef.current?.pause();
-    const onRequestFullscreen = () => videoRef.current?.requestFullscreen();
-    const onExitFullscreen = () => {
-      if (document.fullscreenElement) document.exitFullscreen();
+    const onPlay = () => {
+      if (videoRef.current) videoRef.current.play();
     };
+    const onPause = () => {
+      if (videoRef.current) videoRef.current.pause();
+    };
+    const onRequestFullscreen = () => setFullscreen(true);
+    const onExitFullscreen = () => setFullscreen(false);
 
     const cleanup = () => {
       gestures.off({ hand: Hand.right, sign: Sign.palm }, 5);
@@ -49,7 +54,7 @@ const VideoPlayer: FC<AppInstanceProps> = ({ selected, args }) => {
   }, [gestures, selected]);
 
   return (
-    <div className="video-player">
+    <div className={classNames('video-player', { fullscreen })}>
       <div className="video-player__video">
         <video src={video} ref={videoRef} controls>
           <track kind="captions" />

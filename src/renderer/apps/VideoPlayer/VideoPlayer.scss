@@ -10,6 +10,18 @@
 
   position: relative;
 
+  &.fullscreen {
+    video {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .video-player__footer {
+      display: none;
+    }
+  }
+
   .video-player__video {
     background-color: black;
     margin: 20px 0;
