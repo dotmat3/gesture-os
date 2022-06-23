@@ -15,6 +15,28 @@ const Popup: FC<PopupProps> = ({ text, onCancel, onConfirm }) => {
   const gestures = useGestures();
 
   useEffect(() => {
+    Object.values(Hand).forEach((hand) => {
+      Object.values(Sign).forEach((sign) => {
+        if (hand === Hand.right && (sign === Sign.zero || sign === Sign.palm))
+          return;
+
+        gestures.on({ hand: hand as Hand, sign: sign as Sign }, () => {}, 100);
+      });
+    });
+
+    return () => {
+      Object.values(Hand).forEach((hand) => {
+        Object.values(Sign).forEach((sign) => {
+          if (hand === Hand.right && (sign === Sign.zero || sign === Sign.palm))
+            return;
+
+          gestures.off({ hand: hand as Hand, sign: sign as Sign }, 100);
+        });
+      });
+    };
+  }, [gestures]);
+
+  useEffect(() => {
     gestures.on({ hand: Hand.right, sign: Sign.zero }, onCancel, 20);
     gestures.on({ hand: Hand.right, sign: Sign.palm }, onConfirm, 20);
 
@@ -22,7 +44,7 @@ const Popup: FC<PopupProps> = ({ text, onCancel, onConfirm }) => {
       gestures.off({ hand: Hand.right, sign: Sign.zero }, 20);
       gestures.off({ hand: Hand.right, sign: Sign.palm }, 20);
     };
-  });
+  }, [gestures, onCancel, onConfirm]);
 
   return (
     <div className="popup">
