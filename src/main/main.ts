@@ -195,16 +195,19 @@ function startSocketIOServer() {
 
     ipcMain.on('start-speech-recognition', () => {
       console.log('Sending start speech recognition');
+      if (mainWindow) mainWindow.webContents.send('start-speech-signal');
       socket.emit('start-speech-recognition');
     });
 
     ipcMain.on('cancel-speech-recognition', () => {
       console.log('Sending cancel speech recognition');
+      if (mainWindow) mainWindow.webContents.send('stop-speech-signal');
       socket.emit('cancel-speech-recognition');
     });
 
     ipcMain.on('stop-speech-recognition', () => {
       console.log('Sending stop speech recognition');
+      if (mainWindow) mainWindow.webContents.send('stop-speech-signal');
       socket.emit('stop-speech-recognition');
     });
 

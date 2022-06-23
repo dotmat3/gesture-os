@@ -85,6 +85,29 @@
       }
     }
 
+    .task-bar__icons {
+      padding: 0 20px;
+      display: flex;
+
+      > * {
+        padding: 0 10px;
+      }
+
+      .task-bar__hands > * {
+        padding: 0 5px;
+      }
+
+      img {
+        width: 40px;
+        height: 40px;
+        opacity: 0.6;
+
+        &.active {
+          opacity: 1;
+        }
+      }
+    }
+
     .date-time {
       display: flex;
       flex-direction: column;
