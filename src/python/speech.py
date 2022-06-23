@@ -81,3 +81,17 @@ class SpeechToText:
         self.stop = False
 
         return self.recognized_text
+
+
+if __name__ == "__main__":
+    import speech
+    speech_to_text = speech.SpeechToText(on_preview_text=print)
+
+    while True:
+        input("Press any key to start recording...")
+        speech_to_text.start_recording()
+
+        input("Press any key to stop recording...")
+        text = speech_to_text.stop_recording()
+
+        print("Recognized text:", text)

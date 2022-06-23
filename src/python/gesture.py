@@ -157,7 +157,7 @@ def draw_prediction_bar(
 def write_video(frames, path):
     height, width = frames[0].shape[:2]
     out = cv2.VideoWriter(
-        path, cv2.VideoWriter_fourcc("a", "v", "c", "1"), 30, (width, height)
+        path, cv2.VideoWriter_fourcc(*"mp4v"), 30, (width, height)
     )
     for frame in frames:
         out.write(frame)
@@ -177,21 +177,18 @@ class HandGestureModel:
         self.right_keypoints_accumulator = []
         self.landmarks_frames_accumulator = []
 
-        self.window_size = 40
+        self.window_size = 20
         self.stride = 5
         self.samples = 20
 
         self.last_prediction_time = 0
-        self.cooldown = 1  # seconds
+        self.cooldown = 2  # seconds
 
         self.live_mode = True
         self.status = "Live"
 
         self.lstm = self.load_model()
         self.label_mapping = self.load_labels()
-
-        plt.ion()
-        plt.show()
 
     def release(self):
         self.cap.release()
@@ -236,8 +233,8 @@ class HandGestureModel:
 
         return pred_label, confidence, keypoints
 
-    def show_predictions(self, frame, left_pred_label, right_pred_label):
-        pred_label = left_pred_label + " - " + right_pred_label
+    def show_predictions(self, frame, left_pred_label, left_confidence, right_pred_label, right_confidence):
+        pred_label = f"{left_pred_label} {left_confidence} - {right_pred_label} {right_confidence}"
 
         # Show the prediction on the frame
         cv2.putText(
@@ -252,8 +249,13 @@ class HandGestureModel:
         )
 
     def start(self):
-
         left_pred_label = right_pred_label = "none"
+        left_confidence = right_confidence = 100
+
+        last_frame_time = time.time()
+        frames_produced = 0
+
+        debug_frames = []
 
         while True:
             # Read each frame from the webcam
@@ -267,6 +269,7 @@ class HandGestureModel:
 
             # Flip the frame vertically
             frame = cv2.flip(frame, 1)
+            debug_frames.append(frame)
 
             # Get hand landmark prediction
             framergb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -274,8 +277,6 @@ class HandGestureModel:
 
             # Draw landmarks
             frame = draw_landmarks(frame, result)
-
-            start = time.time()
 
             if self.status == "Recording":
                 self.landmarks_frames_accumulator.append(frame.copy())
@@ -301,18 +302,17 @@ class HandGestureModel:
                 self.left_keypoints_accumulator.append(left_keypoints)
                 self.right_keypoints_accumulator.append(right_keypoints)
 
-                if len(self.left_keypoints_accumulator) == (
-                    self.window_size + self.stride
-                ):
+                if len(self.left_keypoints_accumulator) == (self.window_size + self.stride):
+                    # Move window
                     new_left_window = self.left_keypoints_accumulator[self.stride:]
                     self.left_keypoints_accumulator = new_left_window
                     new_right_window = self.right_keypoints_accumulator[self.stride:]
                     self.right_keypoints_accumulator = new_right_window
 
-                if (
-                    len(self.left_keypoints_accumulator) == self.window_size
-                    and time.time() - self.last_prediction_time > self.cooldown
-                ):
+                    debug_frames = debug_frames[self.stride:]
+
+                cooldown_elapsed = time.time() - self.last_prediction_time >= self.cooldown
+                if (len(self.left_keypoints_accumulator) == self.window_size) and cooldown_elapsed:
                     left_pred_label, left_confidence, _ = self.output_prediction(
                         self.left_keypoints_accumulator)
                     right_pred_label, right_confidence, _ = self.output_prediction(
@@ -321,14 +321,24 @@ class HandGestureModel:
                     if left_pred_label != "none" or right_pred_label != "none":
                         self.last_prediction_time = time.time()
 
+                    # if right_pred_label != "none":
+                    #     landmarks_video = draw_video_landmarks_normalized(
+                    #         np.array(self.right_keypoints_accumulator))
+                    #     filename_lms = f"{time.strftime('%H.%M.%S', time.gmtime())}_debug_lms_{right_pred_label}.mp4"
+                    #     filename_frames = f"{time.strftime('%H.%M.%S', time.gmtime())}_debug_{right_pred_label}.mp4"
+                    #     write_video(
+                    #         landmarks_video, "C:\\Users\\Fabrizio\\Desktop\\debug videos\\" + filename_lms)
+                    #     write_video(np.array(
+                    #         debug_frames), "C:\\Users\\Fabrizio\\Desktop\\debug videos\\" + filename_frames)
+
                     self.detected_gesture_fn(
                         {
                             "left": {
-                                "label": left_pred_label,
+                                "label": left_pred_label.replace("_", " "),
                                 "confidence": left_confidence,
                             },
                             "right": {
-                                "label": right_pred_label,
+                                "label": right_pred_label.replace("_", " "),
                                 "confidence": right_confidence,
                             },
                         }
@@ -387,7 +397,8 @@ class HandGestureModel:
                         }
                     )
 
-                    # write_video(self.landmarks_frames_accumulator, "debug_video.mp4")
+                    # write_video(self.landmarks_frames_accumulator,
+                    #             "debug_video.mp4")
 
                     self.status = "Waiting for input"
                 else:
@@ -408,16 +419,24 @@ class HandGestureModel:
                 cv2.LINE_AA,
             )
 
-            self.show_predictions(frame, left_pred_label, right_pred_label)
+            self.show_predictions(
+                frame, left_pred_label, left_confidence,
+                right_pred_label, right_confidence)
 
             # Show the final output
             cv2.imshow("Output", frame)
+            frames_produced += 1
+            now = time.time()
+            if (now - last_frame_time >= 1):
+                # print("Producing", frames_produced, "fps")
+                last_frame_time = now
+                frames_produced = 0
 
 
 def start_gesture_recognition(window_size, stride, detected_gesture_fn, exception_fn):
     try:
         hands = mpHands.Hands(
-            static_image_mode=True, max_num_hands=2, min_detection_confidence=0.5
+            static_image_mode=False, max_num_hands=2, min_detection_confidence=0.5, model_complexity=1
         )
 
         model = HandGestureModel(hands, detected_gesture_fn)
