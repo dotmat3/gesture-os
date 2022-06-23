@@ -24,6 +24,10 @@ const configuration: webpack.Configuration = {
           },
         },
       },
+      {
+        test: /\.mp3$/,
+        loader: 'file-loader',
+      },
     ],
   },
 

@@ -20,6 +20,10 @@ import FileIcon from '../../../../assets/file-icon.svg';
 
 import './FileExplorer.scss';
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import sound from '../../../../assets/audio-notification.mp3';
+
 export enum HierarchyNodeType {
   text = 'text',
   image = 'image',
@@ -88,6 +92,7 @@ const FileExplorer: FC<AppInstanceProps> = ({ selected, args }) => {
   const [currentPath, setCurrentPath] = useState(path);
   const [files, setFiles] = useState<Array<HierarchyNode>>([]);
   const [voiceActive, setVoiceActive] = useState(false);
+  const [audio] = useState(new Audio(sound));
 
   const voiceActiveRef = useRef<boolean | null>(null);
   const filesRef = useRef<Array<HierarchyNode> | null>(null);
@@ -146,6 +151,7 @@ const FileExplorer: FC<AppInstanceProps> = ({ selected, args }) => {
       if (voiceActiveRef.current) return;
       window.electron.ipcRenderer.sendMessage('start-speech-recognition');
       setVoiceActive(true);
+      audio.play();
     };
 
     const onAnyHandler: GestureCallback = (gesture) => {
@@ -156,6 +162,7 @@ const FileExplorer: FC<AppInstanceProps> = ({ selected, args }) => {
       ) {
         window.electron.ipcRenderer.sendMessage('stop-speech-recognition');
         setVoiceActive(false);
+        audio.play();
       }
     };
 
@@ -225,7 +232,7 @@ const FileExplorer: FC<AppInstanceProps> = ({ selected, args }) => {
         if (clearSpeechRecognized) clearSpeechRecognized();
       }
     };
-  }, [appDispatch, gestures, selected]);
+  }, [appDispatch, audio, gestures, selected]);
 
   return (
     <div className="file-explorer">

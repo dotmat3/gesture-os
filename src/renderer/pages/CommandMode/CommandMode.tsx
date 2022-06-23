@@ -9,6 +9,10 @@ import AppLauncher from './AppLauncher';
 
 import './CommandMode.scss';
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import sound from '../../../../assets/audio-notification.mp3';
+
 const VoiceResult = ({ speechText }: { speechText: string }) => {
   return <h1>{speechText}</h1>;
 };
@@ -25,6 +29,7 @@ const CommandMode: FC<CommandModeProps> = ({ onShowLayoutMode }) => {
   const [showPopup, setShowPopup] = useState(false);
 
   const [speechText, setSpeechText] = useState('');
+  const [audio] = useState(new Audio(sound));
 
   const voiceActiveRef = useRef(voiceActive);
   const historyLengthRef = useRef(apps.history.length);
@@ -43,6 +48,7 @@ const CommandMode: FC<CommandModeProps> = ({ onShowLayoutMode }) => {
       if (hand === Hand.right && sign !== Sign.palm) {
         window.electron.ipcRenderer.sendMessage('stop-speech-recognition');
         setVoiceActive(false);
+        audio.play();
       }
     };
 
@@ -50,6 +56,7 @@ const CommandMode: FC<CommandModeProps> = ({ onShowLayoutMode }) => {
       if (voiceActiveRef.current) return;
       window.electron.ipcRenderer.sendMessage('start-speech-recognition');
       setVoiceActive(true);
+      audio.play();
     };
 
     gestures.on({ hand: Hand.right, sign: Sign.palm }, listener, 10);
@@ -59,7 +66,7 @@ const CommandMode: FC<CommandModeProps> = ({ onShowLayoutMode }) => {
       gestures.off({ hand: Hand.right, sign: Sign.palm }, 10);
       gestures.offAny(number);
     };
-  }, [gestures]);
+  }, [audio, gestures]);
 
   useEffect(() => {
     const speechListener = (text: string) => {
