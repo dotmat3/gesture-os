@@ -198,23 +198,26 @@ function startSocketIOServer() {
 
     // Speech
 
-    ipcMain.on('start-speech-recognition', () => {
+    const onStartSpeech = () => {
       console.log('Sending start speech recognition');
       if (mainWindow) mainWindow.webContents.send('start-speech-signal');
       socket.emit('start-speech-recognition');
-    });
+    };
+    ipcMain.on('start-speech-recognition', onStartSpeech);
 
-    ipcMain.on('cancel-speech-recognition', () => {
+    const onCancelSpeech = () => {
       console.log('Sending cancel speech recognition');
       if (mainWindow) mainWindow.webContents.send('stop-speech-signal');
       socket.emit('cancel-speech-recognition');
-    });
+    };
+    ipcMain.on('cancel-speech-recognition', onCancelSpeech);
 
-    ipcMain.on('stop-speech-recognition', () => {
+    const onStopSpeech = () => {
       console.log('Sending stop speech recognition');
       if (mainWindow) mainWindow.webContents.send('stop-speech-signal');
       socket.emit('stop-speech-recognition');
-    });
+    };
+    ipcMain.on('stop-speech-recognition', onStopSpeech);
 
     socket.on('speech-recognized', (text) => {
       console.log('Received', text);
@@ -233,7 +236,12 @@ function startSocketIOServer() {
 
     socket.on('python-exception', (e) => console.log(e));
 
-    socket.on('disconnect', () => console.log('A user disconnected'));
+    socket.on('disconnect', () => {
+      console.log('A user disconnected');
+      ipcMain.off('start-speech-recognition', onStartSpeech);
+      ipcMain.off('cancel-speech-recognition', onCancelSpeech);
+      ipcMain.off('stop-speech-recognition', onStopSpeech);
+    });
   });
 
   server.listen(5000);
