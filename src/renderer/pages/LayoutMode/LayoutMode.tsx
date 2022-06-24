@@ -15,6 +15,10 @@ import {
 import GestureIndicator from 'renderer/components/GestureIndicator';
 import { computeLayout } from 'renderer/utils';
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import sound from '../../../../assets/audio-notification.mp3';
+
 import './LayoutMode.scss';
 
 export type LayoutModePreviewProps = { onClose: VoidFunction };
@@ -28,6 +32,7 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
   const [assignedApps, setAssignedApps] = useState<{
     [letter in string]: AppInstance;
   }>({});
+  const [audio] = useState(new Audio(sound));
 
   const [voiceActive, setVoiceActive] = useState(false);
   const voiceActiveRef = useRef(voiceActive);
@@ -155,16 +160,15 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
       if (voiceActiveRef.current) return;
       window.electron.ipcRenderer.sendMessage('start-speech-recognition');
       setVoiceActive(true);
+      audio.play();
     };
 
     const onAnyHandler: GestureCallback = (gesture) => {
-      if (
-        voiceActiveRef.current &&
-        gesture.hand === Hand.right &&
-        gesture.sign !== Sign.palm
-      ) {
+      if (!voiceActiveRef.current) return;
+      if (gesture.hand === Hand.right && gesture.sign !== Sign.palm) {
         window.electron.ipcRenderer.sendMessage('stop-speech-recognition');
         setVoiceActive(false);
+        audio.play();
       }
     };
 
@@ -197,7 +201,7 @@ const LayoutModePreview: FC<LayoutModePreviewProps> = ({ onClose }) => {
       gestures.offAny(number);
       if (clearSpeechPreview) clearSpeechPreview();
     };
-  }, [assignApp, gestures]);
+  }, [assignApp, audio, gestures]);
 
   const gridTemplateAreas = useMemo(
     () => computeLayout(blocks, configuration),
