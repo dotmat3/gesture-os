@@ -42,6 +42,15 @@
     flex-direction: column;
     flex-grow: 1;
     margin: 20px;
+    text-align: center;
+
+    .voice-result {
+      color: white;
+
+      &.active {
+        color: lightgrey;
+      }
+    }
   }
 }
 

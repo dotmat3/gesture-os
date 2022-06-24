@@ -10,7 +10,8 @@ export type Channels =
   | 'list-path'
   | 'read-file'
   | 'start-speech-signal'
-  | 'stop-speech-signal';
+  | 'stop-speech-signal'
+  | 'exit';
 
 contextBridge.exposeInMainWorld('electron', {
   ipcRenderer: {

@@ -87,6 +87,11 @@ ipcMain.handle('read-file', (_event, args) => {
   return fs.readFileSync(completePath, { encoding: 'utf-8' });
 });
 
+ipcMain.on('exit', () => {
+  console.log('Shutting down');
+  app.quit();
+});
+
 let mainWindow: BrowserWindow | null = null;
 
 if (process.env.NODE_ENV === 'production') {

@@ -58,20 +58,28 @@ export const TextApp = (args: TextViewerArgs): AppTemplate => ({
   args,
 });
 
+export const DEFAULT_PHOTO = PhotoApp({
+  images: [
+    'https://freedesignfile.com/upload/2017/02/Dark-wood-background-Stock-Photo-08.jpg',
+    'https://images.unsplash.com/photo-1451417379553-15d8e8f49cde?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
+    'https://t3.ftcdn.net/jpg/03/48/49/76/360_F_348497628_qb3h0owAcbndYBjAVfy67zXC41EMW3xD.jpg',
+  ],
+});
+
+export const DEFAULT_VIDEO = VideoApp({
+  video:
+    'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+});
+
+export const DEFAULT_EXPLORER = ExplorerApp({ path: '.' });
+
+export const DEFAULT_TEXT = TextApp({
+  text: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.\nIn dolore quaerat, amet maiores ex autem hic a, quam molestias voluptates doloribus!\nModi eos quae cum accusamus dolorem inventore consectetur deleniti.',
+});
+
 export const defaultAppsToLaunch: Array<AppTemplate> = [
-  PhotoApp({
-    images: [
-      'https://freedesignfile.com/upload/2017/02/Dark-wood-background-Stock-Photo-08.jpg',
-      'https://images.unsplash.com/photo-1451417379553-15d8e8f49cde?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
-      'https://t3.ftcdn.net/jpg/03/48/49/76/360_F_348497628_qb3h0owAcbndYBjAVfy67zXC41EMW3xD.jpg',
-    ],
-  }),
-  VideoApp({
-    video:
-      'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-  }),
-  ExplorerApp({ path: '.' }),
-  TextApp({
-    text: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.\nIn dolore quaerat, amet maiores ex autem hic a, quam molestias voluptates doloribus!\nModi eos quae cum accusamus dolorem inventore consectetur deleniti.',
-  }),
+  DEFAULT_PHOTO,
+  DEFAULT_VIDEO,
+  DEFAULT_EXPLORER,
+  DEFAULT_TEXT,
 ];
