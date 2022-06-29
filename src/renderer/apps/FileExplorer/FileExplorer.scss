@@ -8,29 +8,39 @@
 
   padding: 20px;
 
-  span {
-    opacity: 0.8;
-  }
-
   .file-explorer__header {
     display: flex;
+    align-items: center;
     flex-shrink: 0;
+    width: 100%;
 
-    > * {
-      margin: 0 40px;
+    .file-explorer__path {
+      flex-grow: 1;
+      font-size: 1.5em;
+    }
+
+    span {
+      opacity: 0.8;
+    }
+
+    .gesture-indicator {
+      margin: 0 20px;
     }
   }
 
   .file-explorer__content {
     width: 100%;
-    max-width: 1000px;
+    overflow-x: auto;
 
-    margin: 40px 0;
+    margin: 15px 0;
 
     display: flex;
     justify-content: flex-start;
-    align-items: center;
     flex-flow: column wrap;
+
+    > h1 {
+      text-align: center;
+    }
 
     .file {
       width: 500px;
@@ -50,16 +60,16 @@
         background-color: #5597d3;
         color: white;
 
-        width: 60px;
-        height: 60px;
+        width: 35px;
+        height: 35px;
 
-        font-size: 2em;
+        font-size: 1.3em;
         margin: 0 10px;
       }
 
       .file__icon {
-        width: 75px;
-        height: 75px;
+        width: 40px;
+        height: 40px;
         margin: 0 10px;
         flex-shrink: 0;
       }

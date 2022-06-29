@@ -8,3 +8,18 @@
   font-weight: 400;
   overflow: hidden;
 }
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #5597d3;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #124785;
+  border-radius: 10px;
+}

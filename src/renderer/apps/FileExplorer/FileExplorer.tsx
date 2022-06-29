@@ -237,6 +237,9 @@ const FileExplorer: FC<AppInstanceProps> = ({ selected, args }) => {
   return (
     <div className="file-explorer">
       <div className="file-explorer__header">
+        <p className="file-explorer__path">
+          <span>Path:</span> ~{currentPath.replace('.', '🏠')}
+        </p>
         {currentPath !== '.' && (
           <GestureIndicator
             hand={Hand.right}
@@ -254,9 +257,6 @@ const FileExplorer: FC<AppInstanceProps> = ({ selected, args }) => {
           swap
         />
       </div>
-      <p>
-        <span>Path:</span> ~{currentPath.replace('.', '🏠')}
-      </p>
       <div className="file-explorer__content">
         {files.map((file, index) => (
           <File

@@ -45,7 +45,7 @@ export const VideoApp = (args: VideoPlayerArgs): AppTemplate => ({
 export const ExplorerApp = (args: FileExplorerArgs): AppTemplate => ({
   name: 'Explorer',
   icon: FileIcon,
-  color: '#3B77BC',
+  color: '#2a8dff',
   component: FileExplorer,
   args,
 });
