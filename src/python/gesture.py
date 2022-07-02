@@ -44,8 +44,6 @@ def normalize_size_landmarks(dataset_landmarks):
 
 
 def normalize_dataset(dataset_landmarks, frame_shape):
-    dataset_landmarks = move_to_origin_landmarks(
-        dataset_landmarks, frame_shape)
     normalized_dataset = normalize_size_landmarks(dataset_landmarks)
     return normalized_dataset
 
@@ -111,47 +109,11 @@ def draw_video_landmarks_normalized(landmarks):
             x = int(center_x + landmark[0] * scale_x - (scale_x / 2))
             y = int(center_y + landmark[1] * scale_y - (scale_y / 2))
 
-            cv2.circle(new_frame, [x, y], 3, (0, 0, 220), -1)
+            cv2.circle(new_frame, [x, y], 3, (0, 0, 220), -1, cv2.LINE_AA)
 
         results.append(new_frame)
 
     return results
-
-
-def decode_label(one_hot_vector):
-    decoding = {0: "down", 1: "none", 2: "palm"}
-    index = np.argmax(one_hot_vector)
-    return decoding[index]
-
-
-def putRotatedText(frame, text, coord, color):
-    add_frame = np.zeros_like(frame)
-    add_frame = cv2.putText(
-        add_frame, text, coord, cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2, cv2.LINE_AA
-    )
-
-    M = cv2.getRotationMatrix2D(coord, -90, 1.0)
-    add_frame = cv2.warpAffine(add_frame, M, add_frame.shape[:2][::-1])
-    return add_frame + frame
-
-
-def draw_prediction_bar(
-    frame, predictions, labels, starting_x, starting_y, max_height=200, bar_width=50
-):
-    x = starting_x
-    for pred, label in zip(predictions, labels):
-        frame = cv2.rectangle(
-            frame,
-            (x, starting_y),
-            (x + bar_width, int(starting_y - max_height * pred)),
-            (0, 255, 0),
-            -1,
-        )
-        frame = putRotatedText(
-            frame, label, (int(x + bar_width / 2), starting_y + 5), (0, 0, 255)
-        )
-        x += bar_width + 2
-    return frame
 
 
 def write_video(frames, path):
@@ -433,7 +395,7 @@ class HandGestureModel:
                 frames_produced = 0
 
 
-def start_gesture_recognition(window_size, stride, detected_gesture_fn, exception_fn):
+def start_gesture_recognition(detected_gesture_fn, exception_fn):
     try:
         hands = mpHands.Hands(
             static_image_mode=False, max_num_hands=2, min_detection_confidence=0.5, model_complexity=1
@@ -449,11 +411,4 @@ def start_gesture_recognition(window_size, stride, detected_gesture_fn, exceptio
 
 
 if __name__ == "__main__":
-    window_size = 20
-    stride = 5
-
-    def __detected_gesture_fn(data):
-        print(data)
-
-    start_gesture_recognition(
-        window_size, stride, __detected_gesture_fn, print)
+    start_gesture_recognition(print, print)

@@ -46,11 +46,9 @@ def on_stop_speech_recognition():
 def connect():
     print("I'm connected to the backend")
 
-    window_size = 20
-    stride = 5
     gesture_thread = Thread(
         target=start_gesture_recognition,
-        args=[window_size, stride, on_gesture_prediction, on_gesture_exception],
+        args=[on_gesture_prediction, on_gesture_exception],
     )
     gesture_thread.start()
 
