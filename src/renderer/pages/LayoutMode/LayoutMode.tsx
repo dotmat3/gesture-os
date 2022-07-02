@@ -282,13 +282,22 @@ const LayoutMode: FC<LayoutModeProps> = ({ onClose }) => {
 
   return (
     <div className="layout-mode">
-      <GestureIndicator
-        hand={Hand.right}
-        sign={Sign.swipeUp}
-        text="Change layout"
-        horizontal
-        hideIndication
-      />
+      <div className="layout-mode__header">
+        <div />
+        <GestureIndicator
+          hand={Hand.right}
+          sign={Sign.swipeUp}
+          text="Change layout"
+          hideIndication
+        />
+        <GestureIndicator
+          hand={Hand.right}
+          sign={Sign.palm}
+          text="Assign app"
+          horizontal
+          swap
+        />
+      </div>
       <LayoutModePreview onClose={onClose} />
       <div className="layout-mode__apps">
         {apps.history.map(
@@ -318,7 +327,6 @@ const LayoutMode: FC<LayoutModeProps> = ({ onClose }) => {
           hand={Hand.right}
           sign={Sign.swipeDown}
           text="Go Back"
-          horizontal
           hideIndication
         />
         <GestureIndicator

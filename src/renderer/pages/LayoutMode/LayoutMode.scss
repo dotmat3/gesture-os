@@ -86,13 +86,14 @@
     }
   }
 
+  .layout-mode__header,
   .layout-mode__bottom {
-    width: 100%;
-
+    width: calc(100% - 20px);
     display: flex;
-    margin-bottom: 30px;
+    margin: 10px;
 
     > * {
+      justify-content: unset;
       flex: 1;
     }
   }
