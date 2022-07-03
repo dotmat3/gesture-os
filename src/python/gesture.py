@@ -159,15 +159,14 @@ class HandGestureModel:
     def load_model(self):
         MODEL_PATH = "model.h5"
         # Support direct running this python file and also spawning from another process
-        if os.path.dirname(__file__).lower() != os.getcwd().lower():
+        if not os.path.samefile(os.path.dirname(__file__), os.getcwd()):
             MODEL_PATH = os.path.join("src", "python", MODEL_PATH)
-
         lstm = tf.keras.models.load_model(MODEL_PATH)
         return lstm
 
     def load_labels(self):
         LABELS_PATH = "labels.json"
-        if os.path.dirname(__file__).lower() != os.getcwd().lower():
+        if not os.path.samefile(os.path.dirname(__file__), os.getcwd()):
             LABELS_PATH = os.path.join("src", "python", LABELS_PATH)
         with open(LABELS_PATH, encoding="utf8") as f:
             return json.load(f)
