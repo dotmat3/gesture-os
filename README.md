@@ -35,3 +35,15 @@ A more in-depth report can be found in the `Report.pdf` file.
 <a href="https://github.com/SkyLionx" target="_blank">
   <img src="https://img.shields.io/badge/Profile-Fabrizio%20Rossi-green?style=for-the-badge&logo=github&labelColor=blue&color=white">
 </a>
+
+## Technologies
+
+In this project, the following libraries for Python were used:
+- MediaPipe Hands
+- TensorFlow
+- OpenCV
+- SpeechRecognition
+
+Moreover, for the front-end of the application the following frameworks were adopted:
+- Electron
+- React
