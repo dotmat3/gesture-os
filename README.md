@@ -7,7 +7,7 @@ Proof-of-concept of an operating system which replaces the traditional mouse and
 
 For the **gesture recognition system**, a new private dataset has been acquired, from which hand keypoints have been extracted, thanks to the [MediaPipe Hands](https://google.github.io/mediapipe/solutions/hands) library, and a new deep learning model trained to recognize the defined gestures. A total of 10 gestures were designed to be used in the system: 6 static and 4 dynamic. In particular, the static gestures are the numbers from 0 to 5 and the  dynamic gestures are hand movements in form of swipes into four directions: left, up, right and down. Moreover, several pre-processing and data augmentation techniques were used. The pipeline for the training of the model can be seen in the `Gesture Module.ipynb` notebook, available also on Colab.
 
-<a href="https://colab.research.google.com/drive/1zJMIoXUv-KB7ILMd-cby1UkAZFbk-VgO?usp=sharing">
+<a href="https://colab.research.google.com/github/dotmat3/gesture-os/blob/master/Gesture%20Module.ipynb">
   <img src="https://img.shields.io/badge/Colab-Open%20Notebook-green?style=for-the-badge&logo=googlecolab&color=blue">
 </a>
 <br /><br />
